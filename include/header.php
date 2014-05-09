@@ -67,7 +67,7 @@ if($title=="SQL Syslog Query"){
 } else {
 	echo "<body{$widthmod}>\n";
 }
-require("paths.php");
+require("options/paths.php");
 /*
 $basepath="/var/www";
 $apachebasepath="/etc/apache2";
