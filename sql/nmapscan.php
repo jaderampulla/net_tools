@@ -7,7 +7,7 @@
 	error_reporting(E_ERROR | E_WARNING | E_PARSE);
 	session_start();
 	$title="NMAP Scan";
-	require("snmpincludes.php");
+	require("../include/options/snmpincludes.php");
 	require("../include/header.php");
 	require ("../include/functions.php");
 	$time_start=microtime_float();
