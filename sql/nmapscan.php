@@ -547,8 +547,8 @@
 					if(strlen($return[3])>0 || strlen($sysdescr)>0){
 						$sernumar=StandardSNMPWalk($ip,$snmpversion,$snmpcommstring,"ENTITY-MIB::entPhysicalSerialNum",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
 						$first_key=key($sernumar);
-						//Not Mikrotik
-						if($first_key<1000 && $first_key){
+						//Not Mikrotik (Second part to add in certain Cisco switches)
+						if(($first_key<1000 && $first_key) || ($first_key && preg_match('/Cisco/',$returnar[$ip][3]))){
 							$sernumdescar=StandardSNMPWalk($ip,$snmpversion,$snmpcommstring,"ENTITY-MIB::entPhysicalDescr",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
 							if(sizeof($sernumar)==1){
 								$returnar[$ip][5]=$sernumar[$first_key];
