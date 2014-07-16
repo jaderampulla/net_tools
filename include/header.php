@@ -96,7 +96,7 @@ $apachebasepath="/etc/apache2";
 		if(file_exists("$basepath/default.php") || file_exists("$basepath/livelog.php") || file_exists("$basepath/sql/sql.php")){
 			echo "</ul></li>\n";
 		}
-		$netflowservicecommand="service netflowanalyzer status";
+		$netflowservicecommand="service netflowanalyzer status 2>/dev/null";
 		$netflowstatus=strstr(shell_exec($netflowservicecommand),'is running');
 		//Build Tools Menu
 		if(file_exists("$basepath/sql/netinfo.php") || file_exists("$basepath/sql/nmapscan.php") || file_exists("$basepath/sql/unusedports.php") || file_exists("$apachebasepath/conf.d/cacti.conf") || $netflowstatus==true){
