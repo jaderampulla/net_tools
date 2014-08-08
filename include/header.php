@@ -99,7 +99,7 @@ $apachebasepath="/etc/apache2";
 		$netflowservicecommand="service netflowanalyzer status 2>/dev/null";
 		$netflowstatus=strstr(shell_exec($netflowservicecommand),'is running');
 		//Build Tools Menu
-		if(file_exists("$basepath/sql/netinfo.php") || file_exists("$basepath/sql/nmapscan.php") || file_exists("$basepath/sql/unusedports.php") || file_exists("$apachebasepath/conf.d/cacti.conf") || $netflowstatus==true){
+		if(file_exists("$basepath/sql/netinfo.php") || file_exists("$basepath/sql/nmapscan.php") || file_exists("$basepath/sql/unusedports.php") || file_exists("$apachebasepath/conf.d/cacti.conf") || file_exists("$apachebasepath/conf-enabled/cacti.conf") || $netflowstatus==true){
 			echo "<li><a href=\"#\">Tools</a><ul>\n";
 		}
 		if(file_exists("$basepath/sql/netinfo.php")){
@@ -111,7 +111,7 @@ $apachebasepath="/etc/apache2";
 		if(file_exists("$basepath/sql/unusedports.php")){
 			echo "<li><a href=\"https://" . $_SERVER['SERVER_NAME'] . "/sql/unusedports.php\">Unused Network Ports</a></li>\n";
 		}
-		if(file_exists("$apachebasepath/conf.d/cacti.conf")){
+		if(file_exists("$apachebasepath/conf.d/cacti.conf") || file_exists("$apachebasepath/conf-enabled/cacti.conf")){
 			echo "<li><a href=\"https://" . $_SERVER['SERVER_NAME'] . "/cacti\">Cacti</a></li>\n";
 		}
 		if($netflowstatus==true){
