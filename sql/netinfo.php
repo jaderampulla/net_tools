@@ -597,10 +597,11 @@
 					//Remove last colon from string and covert to uppercase
 					$macadd=strtoupper(substr($macadd,0,-1));
 					if(!array_key_exists($id,$finar)){
-						$finar[$id]=array(0=>"$macadd - $macvlan");
+						$finar[$id]=array(0=>"$macadd");
 					} else {
-						array_push($finar[$id],"$macadd - $macvlan");
+						array_push($finar[$id],"$macadd");
 					}
+					$macvlanar[$macadd]=$macvlan;
 				//Handle the ARP MIB
 				} else if($snmpval && $commandstring=="IP-MIB::ipNetToMediaPhysAddress"){
 					list($remain,$id)=explode(' ',$snmpval);
@@ -758,7 +759,11 @@
 				}
 			}
 		}
-		return $finar;
+		if($macvlanar){
+			return array($finar,$macvlanar);
+		} else {
+			return $finar;
+		}
 	}
 	if($_POST['snmpscan']){
 		$theip=$_POST['theip'];
@@ -1382,7 +1387,7 @@
 					if($_POST['clientmac'] || $_POST['clientarp']){
 						//Alternative SNMP method
 						if($_POST['macextramib']){
-							$ifindextomacar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"Q-BRIDGE-MIB::dot1qTpFdbPort",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							list($ifindextomacar,$macvlanar)=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"Q-BRIDGE-MIB::dot1qTpFdbPort",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($ifindextomacar); echo "</font></pre>";
 							}
@@ -1825,11 +1830,17 @@
 									echo "<td>";
 									unset($tmpmacadd);
 									foreach($ifindextomacar[$theid] as $macadd){
-										$tmpmacadd[]=$macadd;
-										echo "$macadd<br />";
+										if($_POST['macextramib']){
+											$tmpmacadd[]="$macadd - " . $macvlanar[$macadd];
+										} else {
+											$tmpmacadd[]=$macadd;
+										}
+										echo "$macadd - " . $macvlanar[$macadd] . "<br />";
 									}
 									//Don't create an array for single MAC address entries - Used in Excel export
-									if(sizeof($tmpmacadd)==1) $tmpmacadd=$tmpmacadd[0];
+									if(sizeof($tmpmacadd)==1){
+										$tmpmacadd=$tmpmacadd[0];
+									}
 									echo "</td>";
 								}
 								if($_POST['macoui']){
