@@ -208,6 +208,10 @@
 		<tr>
 			<td><input name="clientmac" id="clientmac" type="checkbox" onchange="disable_clientarp()" <?php if($_POST['clientmac'] || $_POST['clientarp']) echo "checked"; ?> />&nbsp;Show client MAC addresses</td>
 		</tr>
+		<tr name="macextramibrow" id="macextramibrow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
+			<td>&nbsp;&nbsp;&nbsp;&nbsp;
+			<input name="macextramib" id="macextramib" type="checkbox" <?php if($_POST['macextramib']) echo "checked"; ?> />&nbsp;Use alternative SNMP method</td>
+		</tr>
 		<tr name="macouirow" id="macouirow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
 			<td>&nbsp;&nbsp;&nbsp;&nbsp;
 			<input name="macoui" id="macoui" type="checkbox" <?php if($_POST['macoui']) echo "checked"; ?> />&nbsp;Show MAC address OUI Info</td>
@@ -215,11 +219,14 @@
 		<script type="text/javascript">
 			function disable_clientarp() {
 				if (document.getElementById("clientmac").checked==false) {
+					document.getElementById("macextramibrow").style.display="none";
+					document.getElementById("macextramib").checked = false;
 					document.getElementById("macouirow").style.display="none";
 					document.getElementById("macoui").checked = false;
 					document.getElementById("routeriprow").style.display="none";
 					document.getElementById("clientarp").checked = false;
 				} else {
+					document.getElementById("macextramibrow").style.display="table-row";
 					document.getElementById("macouirow").style.display="table-row";
 				}
 			}
@@ -402,7 +409,11 @@
 		} else if($snmpversion=="3" && $snmpv3seclevel=="authNoPriv"){
 			$versioncmd="-u $snmpv3user -a $snmpv3authproto -A $snmpv3authpass -l $snmpv3seclevel";
 		}
-		$command="snmpbulkwalk -r 1 -L n -v $snmpversion $versioncmd -O sq $theip $commandstring";
+		if(strstr($commandstring,'Q-BRIDGE-MIB::dot1qTpFdbPort')){
+			$command="snmpbulkwalk -r 1 -L n -v $snmpversion $versioncmd -O Xsq $theip $commandstring";
+		} else {
+			$command="snmpbulkwalk -r 1 -L n -v $snmpversion $versioncmd -O sq $theip $commandstring";
+		}
 		if($_POST['debug'] && $_POST['debugcommands']){
 			echo "<font style=\"color: purple;\"><b>COMMAND:</b> $command</font><br />";
 		}
@@ -566,6 +577,29 @@
 						} else {
 							array_push($finar[$id],$val);
 						}
+					}
+				//Handle the alternative MAC MIB
+				} else if($snmpval && strstr($commandstring,'Q-BRIDGE-MIB::dot1qTpFdbPort')){
+					$snmpval=preg_replace("/dot1qTpFdbPort/",'',$snmpval);
+					list($remain,$id)=explode(' ',$snmpval);
+					list($macvlan,$macadd)=explode('][',$remain);
+					//Remove [ at the beginning of the VLAN
+					$macvlan=preg_replace('/\[/','',$macvlan);
+					//Remove ] at the end of the MAC address
+					$macadd=preg_replace('/]/','',$macadd);
+					//Convert 0:b:ab:7 to 00:0b:ab:07
+					$octet=split(":",$macadd);
+					$macadd="";
+					foreach($octet as $oct) {
+						if(strlen($oct)==1) $oct="0" . $oct;
+						$macadd=$macadd . $oct . ":";
+					}
+					//Remove last colon from string and covert to uppercase
+					$macadd=strtoupper(substr($macadd,0,-1));
+					if(!array_key_exists($id,$finar)){
+						$finar[$id]=array(0=>"$macadd - $macvlan");
+					} else {
+						array_push($finar[$id],"$macadd - $macvlan");
 					}
 				//Handle the ARP MIB
 				} else if($snmpval && $commandstring=="IP-MIB::ipNetToMediaPhysAddress"){
@@ -1346,70 +1380,29 @@
 					//Get MAC addresses for ports
 					/* Excellent MIB for MAC address info: BRIDGE-MIB::dot1dTpFdbTable */
 					if($_POST['clientmac'] || $_POST['clientarp']){
-						$ifindextomacindexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.17.4.3.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
-						if($_POST['debug'] && $_POST['debugoutput']){
-							echo "<pre><font style=\"color: red;\">"; print_r($ifindextomacindexar); echo "</font></pre>";
-						}
-						$ifmacindextomacaddar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.17.4.3.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
-						if($_POST['debug'] && $_POST['debugoutput']){
-							echo "<pre><font style=\"color: red;\">"; print_r($ifmacindextomacaddar); echo "</font></pre>";
-						}
-						/*
-						Good references here:
-						http://people.csse.uwa.edu.au/ryan/tech/findmac.php.txt
-						http://people.csse.uwa.edu.au/ryan/tech/mac_addresses.html
-						*/
-						$ifmacindexmapar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.17.1.4.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
-						if($_POST['debug'] && $_POST['debugoutput']){
-							echo "<pre><font style=\"color: red;\">"; print_r($ifmacindexmapar); echo "</font></pre>";
-						}
-						//Clear previously used temp array
-						unset($tmpused);
-						//Put together arrays to match port ID to MAC Address
-						foreach($ifindextomacindexar as $ifindexkey=>$array){
-							foreach($array as $snmpkey){
-								//Temporary array to keep track of what keys have been used already
-								if(!in_array($ifindexkey,$tmpused)){
-									$tmpused[]=$ifindexkey;
-									$ifindextomacar[$ifindexkey]=array($ifmacindextomacaddar[$snmpkey]);
-								} else {
-									array_push($ifindextomacar[$ifindexkey],$ifmacindextomacaddar[$snmpkey]);
-								}
+						//Alternative SNMP method
+						if($_POST['macextramib']){
+							$ifindextomacar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"Q-BRIDGE-MIB::dot1qTpFdbPort",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							if($_POST['debug'] && $_POST['debugoutput']){
+								echo "<pre><font style=\"color: red;\">"; print_r($ifindextomacar); echo "</font></pre>";
 							}
-						}
-						if($_POST['debug'] && $_POST['debugoutput']){
-							echo "<font style=\"color: red;\"><b>IFINDEXTOMACAR:</b></font><br />";
-							echo "<pre><font style=\"color: red;\">"; print_r($ifindextomacar); echo "</font></pre>";
-						}
-						//Figure out if there's additional ID mapping which is used by some Cisco switches
-						$newid=false; $cnt=0;
-						foreach($ifmacindexmapar as $ifmacindexid=>$ifmacindex){
-							if($cnt==0 && $ifmacindexid!=$ifmacindex){
-								$newid=true;
-							}
-							$cnt+=1;
-						}
-						//Some Cisco switches need an additional interface ID mapping
-						if(count($ifmacindexmapar) && $newid==true){
-							//Store index id to mac address array in temporary variable
-							$ifindextomacartemp=$ifindextomacar;
-							unset($ifindextomacar);
-							//Build new index id to mac address array with new id's
-							foreach($ifmacindexmapar as $oldid=>$ifmacindexid){
-								if($ifmacindexid){
-									$ifindextomacar[$ifmacindexid]=$ifindextomacartemp[$oldid];
-								}
-							}
-						}
-						//Standard way didn't work, try the H3C way
-						if(count($ifindextomacindexar)<=2 && count($ifmacindextomacaddar)<=2){
-							$ifindextomacindexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.25506.8.35.3.1.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						} else {
+							$ifindextomacindexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.17.4.3.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($ifindextomacindexar); echo "</font></pre>";
 							}
-							$ifmacindextomacaddar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.25506.8.35.3.1.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$ifmacindextomacaddar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.17.4.3.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($ifmacindextomacaddar); echo "</font></pre>";
+							}
+							/*
+							Good references here:
+							http://people.csse.uwa.edu.au/ryan/tech/findmac.php.txt
+							http://people.csse.uwa.edu.au/ryan/tech/mac_addresses.html
+							*/
+							$ifmacindexmapar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.17.1.4.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							if($_POST['debug'] && $_POST['debugoutput']){
+								echo "<pre><font style=\"color: red;\">"; print_r($ifmacindexmapar); echo "</font></pre>";
 							}
 							//Clear previously used temp array
 							unset($tmpused);
@@ -1425,11 +1418,60 @@
 									}
 								}
 							}
-							//Standard and H3C ways didn't work
-							if(count($ifindextomacindexar)<1 && count($ifmacindextomacaddar)<1){
-								echo "<font style=\"color: red;\">The MAC address table could not be determined through SNMP</font><br /><br />";
-							} else if($_POST['debug'] && $_POST['debugoutput']){
-								echo "<pre><font style=\"color: red;\">"; print_r($ifmacindextomacaddar); echo "</font></pre>";
+							if($_POST['debug'] && $_POST['debugoutput']){
+								echo "<font style=\"color: red;\"><b>IFINDEXTOMACAR:</b></font><br />";
+								echo "<pre><font style=\"color: red;\">"; print_r($ifindextomacar); echo "</font></pre>";
+							}
+							//Figure out if there's additional ID mapping which is used by some Cisco switches
+							$newid=false; $cnt=0;
+							foreach($ifmacindexmapar as $ifmacindexid=>$ifmacindex){
+								if($cnt==0 && $ifmacindexid!=$ifmacindex){
+									$newid=true;
+								}
+								$cnt+=1;
+							}
+							//Some Cisco switches need an additional interface ID mapping
+							if(count($ifmacindexmapar) && $newid==true){
+								//Store index id to mac address array in temporary variable
+								$ifindextomacartemp=$ifindextomacar;
+								unset($ifindextomacar);
+								//Build new index id to mac address array with new id's
+								foreach($ifmacindexmapar as $oldid=>$ifmacindexid){
+									if($ifmacindexid){
+										$ifindextomacar[$ifmacindexid]=$ifindextomacartemp[$oldid];
+									}
+								}
+							}
+							//Standard way didn't work, try the H3C way
+							if(count($ifindextomacindexar)<=2 && count($ifmacindextomacaddar)<=2){
+								$ifindextomacindexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.25506.8.35.3.1.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+								if($_POST['debug'] && $_POST['debugoutput']){
+									echo "<pre><font style=\"color: red;\">"; print_r($ifindextomacindexar); echo "</font></pre>";
+								}
+								$ifmacindextomacaddar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.25506.8.35.3.1.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+								if($_POST['debug'] && $_POST['debugoutput']){
+									echo "<pre><font style=\"color: red;\">"; print_r($ifmacindextomacaddar); echo "</font></pre>";
+								}
+								//Clear previously used temp array
+								unset($tmpused);
+								//Put together arrays to match port ID to MAC Address
+								foreach($ifindextomacindexar as $ifindexkey=>$array){
+									foreach($array as $snmpkey){
+										//Temporary array to keep track of what keys have been used already
+										if(!in_array($ifindexkey,$tmpused)){
+											$tmpused[]=$ifindexkey;
+											$ifindextomacar[$ifindexkey]=array($ifmacindextomacaddar[$snmpkey]);
+										} else {
+											array_push($ifindextomacar[$ifindexkey],$ifmacindextomacaddar[$snmpkey]);
+										}
+									}
+								}
+								//Standard and H3C ways didn't work
+								if(count($ifindextomacindexar)<1 && count($ifmacindextomacaddar)<1){
+									echo "<font style=\"color: red;\">The MAC address table could not be determined through SNMP</font><br /><br />";
+								} else if($_POST['debug'] && $_POST['debugoutput']){
+									echo "<pre><font style=\"color: red;\">"; print_r($ifmacindextomacaddar); echo "</font></pre>";
+								}
 							}
 						}
 					}
@@ -1645,7 +1687,11 @@
 							$dataarstring=$dataarstring . ',$hpvlanar[$theid],$h3cvlanmembersar[$theid],$h3cportcapabilities[$theid]';
 						}
 						if($_POST['clientmac'] || $_POST['clientarp']){
-							$headerar[]="MAC Address(es)";
+							if($_POST['macextramib']){
+								$headerar[]="MAC Address(es) - VLAN";
+							} else {
+								$headerar[]="MAC Address(es)";
+							}
 							$dataarstring=$dataarstring . ',$tmpmacadd';
 						}
 						if($_POST['macoui']){
