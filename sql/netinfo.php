@@ -953,8 +953,17 @@
 								$lastvlan=$vlan;
 							}
 							//L3 VLAN IP
-							$l3vlanaddrar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IP-MIB::ipAdEntIfIndex",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
-							ksort($l3vlanaddrar);
+							$l3vlanaddrartemp=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IP-MIB::ipAdEntIfIndex",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							ksort($l3vlanaddrartemp);
+							//Map ifdesc ID to VLAN number
+							foreach($ifdescar as $k=>$v){
+								if(strstr($v,'Vlan')){
+									$vlanifdesc[$k]=preg_replace('/Vlan/','',$v);;
+								}
+							}
+							foreach($l3vlanaddrartemp as $vlanidtemp=>$vlanip){
+								$l3vlanaddrar[$vlanifdesc[$vlanidtemp]]=$vlanip;
+							}
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($l3vlanaddrar); echo "</font></pre>";
 							}
