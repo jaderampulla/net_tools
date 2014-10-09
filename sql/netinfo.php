@@ -328,6 +328,34 @@
 				}
 			}
 		</script>
+		
+		<tr>
+			<td><input name="hideextra" id="hideextra" type="checkbox" onclick="toggleHideExtra()" <?php if($_POST['hideextra']) echo "checked"; ?> />&nbsp;Hide Extra Output</td>
+		</tr>
+		<tr name="hidecolumnsextraextra" id="hidecolumnsextraextra" <?php if($_POST['hideextra']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
+			<td>&nbsp;&nbsp;
+				<table border=0 style="display: inline-table;">
+					<tr>
+						<td><input name="hidenull" id="hidenull" type="checkbox" <?php if($_POST['hidenull']) echo "checked"; ?> />&nbsp;Null Interfaces</td>
+						<td><input name="hidestackports" id="hidestackports" type="checkbox" <?php if($_POST['hidestackports']) echo "checked"; ?> />&nbsp;Stack Ports</td>
+						<td><input name="hidevlanint" id="hidevlanint" type="checkbox" <?php if($_POST['hidevlanint']) echo "checked"; ?> />&nbsp;VLAN Interfaces</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<script type="text/javascript">
+			function toggleHideExtra() {
+				if (document.getElementById("hidecolumnsextraextra").style.display=="none") {
+					document.getElementById("hidecolumnsextraextra").style.display="table-row";
+				} else {
+					document.getElementById("hidecolumnsextraextra").style.display="none";
+					document.getElementById("hidenull").checked = false;
+					document.getElementById("hidestackports").checked = false;
+					document.getElementById("hidevlanint").checked = false;
+				}
+			}
+		</script>
+		
 		<tr>
 			<td><input name="debug" id="debug" type="checkbox" onclick="toggleDebug()" <?php if($_POST['debug']) echo "checked"; ?> />&nbsp;Debug Mode</td>
 		</tr>
@@ -849,9 +877,43 @@
 					$excelar[]=array($devheaderar,$devdataar);
 					//Get all the necessary interface info
 					$ifdescartemp=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifDescr",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+					//Hide Null interfaces
+					if($_POST['hidenull']){
+						unset($ifdescartemptemp);
+						$ifdescartemptemp=$ifdescartemp;
+						unset($ifdescartemp);
+						foreach($ifdescartemptemp as $id=>$desc){
+							if(!stristr($desc,'Null')){
+								$ifdescartemp[$id]=$desc;
+							}
+						}
+					}
+					//Hide Stack Ports
+					if($_POST['hidestackports']){
+						unset($ifdescartemptemp);
+						$ifdescartemptemp=$ifdescartemp;
+						unset($ifdescartemp);
+						foreach($ifdescartemptemp as $id=>$desc){
+							if(!stristr($desc,'Stack')){
+								$ifdescartemp[$id]=$desc;
+							}
+						}
+					}
+					//Hide VLAN Interfaces
+					if($_POST['hidevlanint']){
+						unset($ifdescartemptemp);
+						$ifdescartemptemp=$ifdescartemp;
+						unset($ifdescartemp);
+						foreach($ifdescartemptemp as $id=>$desc){
+							if(!stristr($desc,'VLAN')){
+								$ifdescartemp[$id]=$desc;
+							}
+						}
+					}
 					//Check for duplicate VLAN and interface names
 					foreach($ifdescartemp as $id=>$desc){
 						if(!in_array($desc,$ifdescar)){
+							//echo "ID: $id, DESC: $desc<br />\n";
 							$ifdescar[$id]=$desc;
 						}
 					}
