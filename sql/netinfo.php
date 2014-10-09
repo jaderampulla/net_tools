@@ -2009,10 +2009,32 @@
 									echo "<td>" . $ifoutoctetsar[$theid] . "</td>";
 								}
 								if($_POST['errorsdiscard']){
-									echo "<td>" . $ifinerrorsar[$theid] . "</td>";
-									echo "<td>" . $ifouterrorsar[$theid] . "</td>";
-									echo "<td>" . $ifindiscardsar[$theid] . "</td>";
-									echo "<td>" . $ifoutdiscardsar[$theid] . "</td>";
+									//Get number of seconds
+									list($junk,$syscalctime)=explode('(',$sysuptime);
+									list($syscalctime,$junk)=explode(')',$syscalctime);
+									//Remove last 2 characters from time ticks - milliseconds
+									$syscalctime=substr($syscalctime,0,-2);
+									//If there's 1 or more errors or discards per minute, print it red
+									if(($ifinerrorsar[$theid]/($syscalctime/60))>=1){
+										echo "<td><font style=\"color: red;\">" . $ifinerrorsar[$theid] . "</font></td>";
+									} else {
+										echo "<td>" . $ifinerrorsar[$theid] . "</td>";
+									}
+									if(($ifouterrorsar[$theid]/($syscalctime/60))>=1){
+										echo "<td><font style=\"color: red;\">" . $ifouterrorsar[$theid] . "</font></td>";
+									} else {
+										echo "<td>" . $ifouterrorsar[$theid] . "</td>";
+									}
+									if(($ifindiscardsar[$theid]/($syscalctime/60))>=1){
+										echo "<td><font style=\"color: red;\">" . $ifindiscardsar[$theid] . "</font></td>";
+									} else {
+										echo "<td>" . $ifindiscardsar[$theid] . "</td>";
+									}
+									if(($ifoutdiscardsar[$theid]/($syscalctime/60))>=1){
+										echo "<td><font style=\"color: red;\">" . $ifoutdiscardsar[$theid] . "</font></td>";
+									} else {
+										echo "<td>" . $ifoutdiscardsar[$theid] . "</td>";
+									}
 								}
 								echo "</tr>\n";
 								/*
