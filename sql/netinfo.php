@@ -208,9 +208,17 @@
 		<tr>
 			<td><input name="clientmac" id="clientmac" type="checkbox" onchange="disable_clientarp()" <?php if($_POST['clientmac'] || $_POST['clientarp']) echo "checked"; ?> />&nbsp;Show client MAC addresses</td>
 		</tr>
-		<tr name="macextramibrow" id="macextramibrow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
+		<tr name="macstandardrow" id="macstandardrow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
 			<td>&nbsp;&nbsp;&nbsp;&nbsp;
-			<input name="macextramib" id="macextramib" type="checkbox" <?php if($_POST['macextramib']) echo "checked"; ?> />&nbsp;Use alternative SNMP method</td>
+			<input type="radio" name="macchoice" id="macchoice" value="standard" <?php if($_POST['macchoice']=="standard" || !$_POST['macchoice']) echo "checked"; ?>>&nbsp;Standard Method</td>
+		</tr>
+		<tr name="macaltrow" id="macaltrow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
+			<td>&nbsp;&nbsp;&nbsp;&nbsp;
+			<input type="radio" name="macchoice" id="macchoice" value="alt" <?php if($_POST['macchoice']=="alt") echo "checked"; ?>>&nbsp;Alternative Method</td>
+		</tr>
+		<tr name="macciscorow" id="macciscorow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
+			<td>&nbsp;&nbsp;&nbsp;&nbsp;
+			<input type="radio" name="macchoice" id="macchoice" value="cisco" <?php if($_POST['macchoice']=="cisco") echo "checked"; ?>>&nbsp;Cisco Method</td>
 		</tr>
 		<tr name="macouirow" id="macouirow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
 			<td>&nbsp;&nbsp;&nbsp;&nbsp;
@@ -219,14 +227,17 @@
 		<script type="text/javascript">
 			function disable_clientarp() {
 				if (document.getElementById("clientmac").checked==false) {
-					document.getElementById("macextramibrow").style.display="none";
-					document.getElementById("macextramib").checked = false;
+					document.getElementById("macstandardrow").style.display="none";
+					document.getElementById("macaltrow").style.display="none";
+					document.getElementById("macciscorow").style.display="none";
 					document.getElementById("macouirow").style.display="none";
 					document.getElementById("macoui").checked = false;
 					document.getElementById("routeriprow").style.display="none";
 					document.getElementById("clientarp").checked = false;
 				} else {
-					document.getElementById("macextramibrow").style.display="table-row";
+					document.getElementById("macstandardrow").style.display="table-row";
+					document.getElementById("macaltrow").style.display="table-row";
+					document.getElementById("macciscorow").style.display="table-row";
 					document.getElementById("macouirow").style.display="table-row";
 				}
 			}
@@ -429,7 +440,7 @@
 		}
 		return shell_exec($command);
 	}
-	function StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,$commandstring,$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass){
+	function StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,$commandstring,$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,$invlan){
 		if($snmpversion=="2c"){
 			$versioncmd="-c $snmpcommstring";
 		} else if($snmpversion=="3" && $snmpv3seclevel=="authPriv"){
@@ -439,6 +450,8 @@
 		}
 		if(strstr($commandstring,'Q-BRIDGE-MIB::dot1qTpFdbPort')){
 			$command="snmpbulkwalk -r 1 -L n -v $snmpversion $versioncmd -O Xsq $theip $commandstring";
+		} else if(strstr($commandstring,'BRIDGE-MIB::dot1dTpFdbPort') || strstr($commandstring,'1.3.6.1.2.1.17.1.4.1.2')){
+			$command="snmpbulkwalk -r 1 -L n -v $snmpversion $versioncmd -n vlan-$invlan -O Xsq $theip $commandstring";
 		} else {
 			$command="snmpbulkwalk -r 1 -L n -v $snmpversion $versioncmd -O sq $theip $commandstring";
 		}
@@ -630,6 +643,35 @@
 						array_push($finar[$id],"$macadd");
 					}
 					$macvlanar[$macadd]=$macvlan;
+				//Handle the Cisco MAC MIB
+				} else if($snmpval && strstr($commandstring,'BRIDGE-MIB::dot1dTpFdbPort') && !strstr($snmpval,'OID')){
+					$snmpval=preg_replace("/dot1dTpFdbPort/",'',$snmpval);
+					list($remain,$id)=explode(' ',$snmpval);
+					//Remove [ at the beginning of the MAC address
+					$macadd=preg_replace('/\[/','',$remain);
+					//Remove ] at the end of the MAC address
+					$macadd=preg_replace('/]/','',$macadd);
+					//Convert 0:b:ab:7 to 00:0b:ab:07
+					$octet=split(":",$macadd);
+					$macadd="";
+					foreach($octet as $oct) {
+						if(strlen($oct)==1) $oct="0" . $oct;
+						$macadd=$macadd . $oct . ":";
+					}
+					//Remove last colon from string and covert to uppercase
+					$macadd=strtoupper(substr($macadd,0,-1));
+					//echo "MACADD: '$macadd' ID: '$id'<br />\n";
+					if(!array_key_exists($id,$finar)){
+						$finar[$id]=array(0=>"$macadd");
+					} else {
+						array_push($finar[$id],"$macadd");
+					}
+					$macvlanar[$macadd]=$invlan;
+				//Handle the Cisco MAC index ID to interface ID mapping MIB
+				} else if($snmpval && strstr($commandstring,'1.3.6.1.2.1.17.1.4.1.2') && !strstr($snmpval,'OID')){
+					list($remain,$id)=explode(' ',$snmpval);
+					$val=end(explode('.',$remain));
+					$finar[$val]=$id;
 				//Handle the ARP MIB
 				} else if($snmpval && $commandstring=="IP-MIB::ipNetToMediaPhysAddress"){
 					list($remain,$id)=explode(' ',$snmpval);
@@ -1457,10 +1499,42 @@
 					/* Excellent MIB for MAC address info: BRIDGE-MIB::dot1dTpFdbTable */
 					if($_POST['clientmac'] || $_POST['clientarp']){
 						//Alternative SNMP method
-						if($_POST['macextramib']){
+						if($_POST['macchoice']=="alt"){
 							list($ifindextomacar,$macvlanar)=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"Q-BRIDGE-MIB::dot1qTpFdbPort",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($ifindextomacar); echo "</font></pre>";
+							}
+						} else if($_POST['macchoice']=="cisco"){
+							//http://www.cisco.com/c/en/us/support/docs/ip/simple-network-management-protocol-snmp/40367-camsnmp40367.html
+							//Get list of active VLAN's on switch
+							$vlanstatusar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							//Loop through each VLAN and grab the MAC address table
+							foreach($vlanstatusar as $vlan=>$status){
+								//Don't include VLAN's 1002 (fddi-default), 1003 (token-ring-default), 1004 (fddinet-default), 1005 (trnet-default)
+								if($vlan!=1002 && $vlan!=1003 && $vlan!=1004 && $vlan!=1005){
+									//echo "VLAN: '$vlan'<br />\n";
+									//Grab the MAC address table for the current VLAN
+									list($macartemp,$macvlanartemp)=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"BRIDGE-MIB::dot1dTpFdbPort",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,$vlan);
+									//The ID from the MAC address table (For each VLAN) has to be mapped to the interface index...STUPID CISCO!...more excessive SNMP walks!
+									$tmpintindexmapar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.2.1.17.1.4.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,$vlan);
+									//Add the MAC addresses from each VLAN to the final array (Ports can have MAC addresses in multiple VLAN's)
+									foreach($macartemp as $id=>$tempar){
+										foreach($tempar as $tmpmac){
+											//echo "<font style=\"color: red;\">ID: $id MAC: $tmpmac</font><br />\n";
+											if(!array_key_exists($tmpintindexmapar[$id],$ifindextomacar)){
+												$ifindextomacar[$tmpintindexmapar[$id]]=array(0=>"$tmpmac");
+											} else {
+												array_push($ifindextomacar[$tmpintindexmapar[$id]],"$tmpmac");
+											}
+										}
+									}
+									//Add the MAC address to VLAN mapping to the final array
+									foreach($macvlanartemp as $macadd=>$vlan){
+										$macvlanar[$macadd]=$vlan;
+									}
+									unset($macartemp);
+									unset($macvlanartemp);
+								}
 							}
 						} else {
 							$ifindextomacindexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.17.4.3.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
@@ -1763,7 +1837,7 @@
 							$dataarstring=$dataarstring . ',$hpvlanar[$theid],$h3cvlanmembersar[$theid],$h3cportcapabilities[$theid]';
 						}
 						if($_POST['clientmac'] || $_POST['clientarp']){
-							if($_POST['macextramib']){
+							if($_POST['macchoice']=="alt" || $_POST['macchoice']=="cisco"){
 								$headerar[]="MAC Address(es) - VLAN";
 							} else {
 								$headerar[]="MAC Address(es)";
@@ -1901,12 +1975,13 @@
 									echo "<td>";
 									unset($tmpmacadd);
 									foreach($ifindextomacar[$theid] as $macadd){
-										if($_POST['macextramib']){
+										if($_POST['macchoice']=="alt" || $_POST['macchoice']=="cisco"){
 											$tmpmacadd[]="$macadd - " . $macvlanar[$macadd];
+											echo "$macadd - " . $macvlanar[$macadd] . "<br />";
 										} else {
 											$tmpmacadd[]=$macadd;
+											echo "$macadd<br />";
 										}
-										echo "$macadd - " . $macvlanar[$macadd] . "<br />";
 									}
 									//Don't create an array for single MAC address entries - Used in Excel export
 									if(sizeof($tmpmacadd)==1){
