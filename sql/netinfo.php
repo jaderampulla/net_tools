@@ -3,7 +3,6 @@
 	Windows OpenSSL here: http://slproweb.com/products/Win32OpenSSL.html
 	Windows SNMP here: http://sourceforge.net/projects/net-snmp/files/net-snmp%20binaries/5.5-binaries/
 	Be sure to use an OpenSSL version less than 1.0 for compatibility with encryption support (SNMPv3) in the Net-SNMP tools
-	More testing
 	*/
 	error_reporting(E_ERROR | E_WARNING | E_PARSE);
 	session_start();
