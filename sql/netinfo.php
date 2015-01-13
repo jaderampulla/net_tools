@@ -210,15 +210,15 @@
 		</tr>
 		<tr name="macstandardrow" id="macstandardrow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
 			<td>&nbsp;&nbsp;&nbsp;&nbsp;
-			<input type="radio" name="macchoice" id="macchoice" value="standard" <?php if($_POST['macchoice']=="standard" || !$_POST['macchoice']) echo "checked"; ?>>&nbsp;Standard Method</td>
+			<input type="radio" name="macchoice" id="macchoice" value="standard" <?php if($_POST['macchoice']=="standard") echo "checked"; ?>>&nbsp;Standard Method</td>
 		</tr>
 		<tr name="macaltrow" id="macaltrow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
 			<td>&nbsp;&nbsp;&nbsp;&nbsp;
-			<input type="radio" name="macchoice" id="macchoice" value="alt" <?php if($_POST['macchoice']=="alt") echo "checked"; ?>>&nbsp;Alternative Method</td>
+			<input type="radio" name="macchoice" id="macchoice" value="alt" <?php if($_POST['macchoice']=="alt" || !$_POST['macchoice']) echo "checked"; ?>>&nbsp;Alternative Method</td>
 		</tr>
 		<tr name="macciscorow" id="macciscorow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
 			<td>&nbsp;&nbsp;&nbsp;&nbsp;
-			<input type="radio" name="macchoice" id="macchoice" value="cisco" <?php if($_POST['macchoice']=="cisco") echo "checked"; ?>>&nbsp;Cisco Method</td>
+			<input type="radio" name="macchoice" id="macchoice" value="cisco" <?php if($_POST['macchoice']=="cisco") echo "checked"; ?>>&nbsp;Cisco Method (Requirements <button style="background: none; border: none; padding: 0; margin: 0px -3px 0px -2px; color: blue; cursor: pointer; font-size: 1em;" onclick="CiscoRequirements()">here</button>)</td>
 		</tr>
 		<tr name="macouirow" id="macouirow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
 			<td>&nbsp;&nbsp;&nbsp;&nbsp;
@@ -240,6 +240,9 @@
 					document.getElementById("macciscorow").style.display="table-row";
 					document.getElementById("macouirow").style.display="table-row";
 				}
+			}
+			function CiscoRequirements() {
+				alert("### SNMPv3 ###\n\nsnmp-server group snmp_admin v3 priv\nsnmp-server group snmp_admin v3 auth context vlan- match prefix\nsnmp-server user snmpadmin snmp_admin v3 auth sha MYAUTHPASS priv aes 128 MYPRIVPASS");
 			}
 		</script>
 		<tr>
@@ -277,9 +280,12 @@
 		<script type="text/javascript">
 			function toggleRouterIP() {
 				if (document.getElementById("routeriprow").style.display=="none") {
-					document.getElementById("routeriprow").style.display="table-row";
 					document.getElementById("clientmac").checked = true;
+					document.getElementById("macstandardrow").style.display="table-row";
+					document.getElementById("macaltrow").style.display="table-row";
+					document.getElementById("macciscorow").style.display="table-row";
 					document.getElementById("macouirow").style.display="table-row";
+					document.getElementById("routeriprow").style.display="table-row";
 				} else {
 					document.getElementById("routeriprow").style.display="none";
 					disable_arp();
