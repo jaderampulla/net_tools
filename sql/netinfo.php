@@ -395,6 +395,37 @@
 				}
 			}
 		</script>
+		
+		<tr>
+			<td><input name="addfeatures" id="addfeatures" type="checkbox" onclick="toggleAddFeatures()" <?php if($_POST['addfeatures']) echo "checked"; ?> />&nbsp;Additional Features</td>
+		</tr>
+		<tr name="addfeaturesextra" id="addfeaturesextra" <?php if($_POST['addfeatures']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
+			<td>&nbsp;&nbsp;
+				<table border=0 style="display: inline-table;">
+					<tr>
+						<td><input name="cdpname" id="cdpname" type="checkbox" <?php if($_POST['cdpname']) echo "checked"; ?> />&nbsp;CDP Name</td>
+						<td><input name="cdpip" id="cdpip" type="checkbox" <?php if($_POST['cdpip']) echo "checked"; ?> />&nbsp;CDP IP</td>
+						<td><input name="cdpdev" id="cdpdev" type="checkbox" <?php if($_POST['cdpdev']) echo "checked"; ?> />&nbsp;CDP Device</td>
+					</tr>
+					<tr>
+						<td colspan="3"><input name="cdpint" id="cdpint" type="checkbox" <?php if($_POST['cdpint']) echo "checked"; ?> />&nbsp;CDP Remote Interface</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<script type="text/javascript">
+			function toggleAddFeatures() {
+				if (document.getElementById("addfeaturesextra").style.display=="none") {
+					document.getElementById("addfeaturesextra").style.display="table-row";
+				} else {
+					document.getElementById("addfeaturesextra").style.display="none";
+					document.getElementById("cdpname").checked = false;
+					document.getElementById("cdpip").checked = false;
+					document.getElementById("cdpdev").checked = false;
+					document.getElementById("cdpint").checked = false;
+				}
+			}
+		</script>
 	</table>
 	</form><br />
 	<!-- Default cursor location -->
@@ -804,6 +835,30 @@
 							}
 						}
 					}
+				//Handle CDP Name, Device, and Remote Interface
+				} else if($snmpval && ($commandstring=="SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.6" || $commandstring=="SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.8" || $commandstring=="SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.7")){
+					list($id,$val)=explode(' ',$snmpval,2);
+					$val=trim(preg_replace('/"/','',$val));
+					//list($id,$remain)=explode('.',$id)[10];
+					if($commandstring=="SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.6"){
+						$id=trim(preg_replace('/enterprises.9.9.23.1.2.1.1.6./','',$id));
+					} else if($commandstring=="SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.8"){
+						$id=trim(preg_replace('/enterprises.9.9.23.1.2.1.1.8./','',$id));
+					} else if($commandstring=="SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.7"){
+						$id=trim(preg_replace('/enterprises.9.9.23.1.2.1.1.7./','',$id));
+					}
+					list($id,$remain)=explode('.',$id);
+					$finar[$id]=$val;
+				//Handle CDP IP
+				} else if($snmpval && $commandstring=="SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.4"){
+					list($id,$val)=explode(' "',$snmpval,2);
+					$val=trim(preg_replace('/"/','',$val));
+					list($ipa,$ipb,$ipc,$ipd)=explode(' ',$val);
+					$ipa=hexdec($ipa); $ipb=hexdec($ipb); $ipc=hexdec($ipc); $ipd=hexdec($ipd);
+					$val="$ipa.$ipb.$ipc.$ipd";
+					$id=trim(preg_replace('/enterprises.9.9.23.1.2.1.1.4./','',$id));
+					list($id,$remain)=explode('.',$id);
+					$finar[$id]=$val;
 				//Handle everything else
 				} else {
 					//Get rid of ifDescr, ifName, ifAlias, etc
@@ -1709,6 +1764,30 @@
 							echo "<pre><font style=\"color: red;\">"; print_r($ifoutdiscardsar); echo "</font></pre>";
 						}
 					}
+					if($_POST['cdpname']){
+						$cdpnamear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						if($_POST['debug'] && $_POST['debugoutput']){
+							echo "<pre><font style=\"color: red;\">"; print_r($cdpnamear); echo "</font></pre>";
+						}
+					}
+					if($_POST['cdpip']){
+						$cdpipar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						if($_POST['debug'] && $_POST['debugoutput']){
+							echo "<pre><font style=\"color: red;\">"; print_r($cdpipar); echo "</font></pre>";
+						}
+					}
+					if($_POST['cdpdev']){
+						$cdpdevar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.8",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						if($_POST['debug'] && $_POST['debugoutput']){
+							echo "<pre><font style=\"color: red;\">"; print_r($cdpdevar); echo "</font></pre>";
+						}
+					}
+					if($_POST['cdpint']){
+						$cdpintar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						if($_POST['debug'] && $_POST['debugoutput']){
+							echo "<pre><font style=\"color: red;\">"; print_r($cdpintar); echo "</font></pre>";
+						}
+					}
 					if($_POST['debug']){
 						echo "<br />\n";
 					}
@@ -1874,6 +1953,22 @@
 							$headerar[]="In Discards";
 							$headerar[]="Out Discards";
 							$dataarstring=$dataarstring . ',$ifinerrorsar[$theid],$ifouterrorsar[$theid],$ifindiscardsar[$theid],$ifoutdiscardsar[$theid]';
+						}
+						if($_POST['cdpname']){
+							$headerar[]="CDP Name";
+							$dataarstring=$dataarstring . ',$cdpnamear[$theid]';
+						}
+						if($_POST['cdpip']){
+							$headerar[]="CDP IP";
+							$dataarstring=$dataarstring . ',$cdpipar[$theid]';
+						}
+						if($_POST['cdpdev']){
+							$headerar[]="CDP Device";
+							$dataarstring=$dataarstring . ',$cdpdevar[$theid]';
+						}
+						if($_POST['cdpint']){
+							$headerar[]="CDP Remote Interface";
+							$dataarstring=$dataarstring . ',$cdpintar[$theid]';
 						}
 						echo "<table border=1>\n";
 						echo "<tr>";
@@ -2116,6 +2211,18 @@
 									} else {
 										echo "<td>" . $ifoutdiscardsar[$theid] . "</td>";
 									}
+								}
+								if($_POST['cdpname']){
+									echo "<td>" . $cdpnamear[$theid] . "</td>";
+								}
+								if($_POST['cdpip']){
+									echo "<td>" . $cdpipar[$theid] . "</td>";
+								}
+								if($_POST['cdpdev']){
+									echo "<td>" . $cdpdevar[$theid] . "</td>";
+								}
+								if($_POST['cdpint']){
+									echo "<td>" . $cdpintar[$theid] . "</td>";
 								}
 								echo "</tr>\n";
 								/*
