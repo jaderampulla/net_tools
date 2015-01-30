@@ -210,11 +210,11 @@
 		</tr>
 		<tr name="macstandardrow" id="macstandardrow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
 			<td>&nbsp;&nbsp;&nbsp;&nbsp;
-			<input type="radio" name="macchoice" id="macchoice" value="standard" <?php if($_POST['macchoice']=="standard") echo "checked"; ?>>&nbsp;Standard Method</td>
+			<input type="radio" name="macchoice" id="macchoice" value="standard" <?php if($_POST['macchoice']=="standard") echo "checked"; ?>>&nbsp;Standard Method <i>(MAC Only)</i></td>
 		</tr>
 		<tr name="macaltrow" id="macaltrow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
 			<td>&nbsp;&nbsp;&nbsp;&nbsp;
-			<input type="radio" name="macchoice" id="macchoice" value="alt" <?php if($_POST['macchoice']=="alt" || !$_POST['macchoice']) echo "checked"; ?>>&nbsp;Alternative Method</td>
+			<input type="radio" name="macchoice" id="macchoice" value="alt" <?php if($_POST['macchoice']=="alt" || !$_POST['macchoice']) echo "checked"; ?>>&nbsp;Alternative Method <i>(MAC & VLAN)</i></td>
 		</tr>
 		<tr name="macciscorow" id="macciscorow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
 			<td>&nbsp;&nbsp;&nbsp;&nbsp;
@@ -242,7 +242,7 @@
 				}
 			}
 			function CiscoRequirements() {
-				alert("### SNMPv3 ###\n\nsnmp-server group snmp_admin v3 priv\nsnmp-server group snmp_admin v3 auth context vlan- match prefix\nsnmp-server user snmpadmin snmp_admin v3 auth sha MYAUTHPASS priv aes 128 MYPRIVPASS");
+				alert("### SNMPv2 ###\n\nNo requirements\n\n### SNMPv3 ###\n\nsnmp-server group snmp_admin v3 priv\nsnmp-server group snmp_admin v3 auth context vlan- match prefix\nsnmp-server user snmpadmin snmp_admin v3 auth sha MYAUTHPASS priv aes 128 MYPRIVPASS");
 			}
 		</script>
 		<tr>
@@ -357,6 +357,12 @@
 						<td><input name="hidestackports" id="hidestackports" type="checkbox" <?php if($_POST['hidestackports']) echo "checked"; ?> />&nbsp;Stack Ports</td>
 						<td><input name="hidevlanint" id="hidevlanint" type="checkbox" <?php if($_POST['hidevlanint']) echo "checked"; ?> />&nbsp;VLAN Interfaces</td>
 					</tr>
+					<tr>
+						<td colspan="3"><input name="hidemacciscotrunk" id="hidemacciscotrunk" type="checkbox" <?php if($_POST['hidemacciscotrunk']) echo "checked"; ?> />&nbsp;Hide MAC's for Cisco Trunks</td>
+					</tr>
+					<tr>
+						<td colspan="3"><input name="hidemacintid" id="hidemacintid" type="checkbox" <?php if($_POST['hidemacintid']) echo "checked"; ?> />&nbsp;Hide MAC's for SNMP Int ID's (CSV List):&nbsp;&nbsp;<input type="text" name="hidemacintidval" id="hidemacintidval" style="width: 100px; text-align: left;" <?php if($_POST['hidemacintidval']) echo " value=\"{$_POST['hidemacintidval']}\""; ?> /></td>
+					</tr>
 				</table>
 			</td>
 		</tr>
@@ -368,7 +374,9 @@
 					document.getElementById("hidecolumnsextraextra").style.display="none";
 					document.getElementById("hidenull").checked = false;
 					document.getElementById("hidestackports").checked = false;
-					document.getElementById("hidevlanint").checked = false;
+					document.getElementById("hidemacciscotrunk").checked = false;
+					document.getElementById("hidemacintid").checked = false;
+					document.getElementById("hidemacintidval").value = null;
 				}
 			}
 		</script>
@@ -488,7 +496,11 @@
 		if(strstr($commandstring,'Q-BRIDGE-MIB::dot1qTpFdbPort')){
 			$command="snmpbulkwalk -r 1 -L n -v $snmpversion $versioncmd -O Xsq $theip $commandstring";
 		} else if(strstr($commandstring,'BRIDGE-MIB::dot1dTpFdbPort') || strstr($commandstring,'1.3.6.1.2.1.17.1.4.1.2')){
-			$command="snmpbulkwalk -r 1 -L n -v $snmpversion $versioncmd -n vlan-$invlan -O Xsq $theip $commandstring";
+			if($snmpversion=="2c"){
+				$command="snmpbulkwalk -r 1 -L n -v $snmpversion $versioncmd@$invlan -O Xsq $theip $commandstring";
+			} else if($snmpversion=="3"){
+				$command="snmpbulkwalk -r 1 -L n -v $snmpversion $versioncmd -n vlan-$invlan -O Xsq $theip $commandstring";
+			}
 		} else {
 			$command="snmpbulkwalk -r 1 -L n -v $snmpversion $versioncmd -O sq $theip $commandstring";
 		}
@@ -972,7 +984,7 @@
 					$devdataar[]=array('System Uptime:',$sysuptime);
 					//Print system info
 					echo "<br /><b>System Name:</b> $testsnmp<br />\n";
-					echo "<b>System Description:</b> $sysdescr<br />\n";
+					echo "<b>System Description:</b> <div style=\"width: 50%;\">$sysdescr</div>\n";
 					echo "<b>System Contact:</b> $syscontact<br />\n";
 					echo "<b>System Location:</b> $syslocation<br />\n";
 					echo "<b>System Uptime:</b> $sysuptime<br /><br />\n";
@@ -1684,6 +1696,24 @@
 									echo "<pre><font style=\"color: red;\">"; print_r($ifmacindextomacaddar); echo "</font></pre>";
 								}
 							}
+						}
+					}
+					if($_POST['hidemacciscotrunk']){
+						$ciscotrunkar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						//echo "<pre><font style=\"color: red;\">"; print_r($ciscotrunkar); echo "</font></pre>";
+						foreach($ciscotrunkar as $theid=>$trunkval){
+							if($trunkval=="Trunk"){
+								$hideidar[]=$theid;
+							}
+						}
+						foreach($hideidar as $hideid){
+							unset($ifindextomacar[$hideid]);
+						}
+					}
+					if($_POST['hidemacintidval']){
+						$hideidar=explode(',',$_POST['hidemacintidval']);
+						foreach($hideidar as $hideid){
+							unset($ifindextomacar[$hideid]);
 						}
 					}
 					if($_POST['macoui']){
