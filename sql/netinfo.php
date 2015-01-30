@@ -10,7 +10,7 @@
 	require("../include/options/snmpincludes.php");
 	//Adjust page width depending on what's selected
 	$widthmodset=true;
-	$basewidth=1200;
+	$basewidth=1250;
 	if($_POST['vlanchooser']){
 	}
 	if($_POST['clientmac']){
@@ -18,6 +18,11 @@
 	}
 	if($_POST['macoui']){
 		$basewidth+=400;
+	}
+	if($_POST['clientarp'] && $_POST['ignoredns']){
+		$basewidth+=150;
+	} else if($_POST['clientarp']){
+		$basewidth+=350;
 	}
 	if($_POST['trafficstats']){
 		$basewidth+=200;
