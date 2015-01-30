@@ -459,6 +459,24 @@
 					<tr>
 						<td colspan="3"><input name="cdpint" id="cdpint" type="checkbox" <?php if($_POST['cdpint']) echo "checked"; ?> />&nbsp;CDP Remote Interface</td>
 					</tr>
+					<tr>
+						<td colspan="3"><input name="exportfileformatrow" id="exportfileformatrow" type="checkbox" onclick="toggleFileFormats()" <?php if($_POST['exportfileformatrow']) echo "checked"; ?> />&nbsp;Adjust export file format</td>
+					</tr>
+					<tr name="exportfileformatrowextra" id="exportfileformatrowextra" <?php if($_POST['exportfileformatrow']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
+						<td colspan="3">&nbsp;&nbsp;
+							<table border=0 style="display: inline-table;">
+								<tr>
+									<td><input type="radio" name="exportfileformatchoice" id="exportfileformatchoice" value="ipname" <?php if($_POST['exportfileformatchoice']=="ipname" || !$_POST['exportfileformatchoice']) echo "checked"; ?>>"&#60;ip&#62; -  &#60;name&#62; - Network Info"</td>
+								</tr>
+								<tr>
+									<td><input type="radio" name="exportfileformatchoice" id="exportfileformatchoice" value="nameip" <?php if($_POST['exportfileformatchoice']=="nameip") echo "checked"; ?>>"&#60;name&#62; -  &#60;ip&#62; - Network Info"</td>
+								</tr>
+								<tr>
+									<td><input type="radio" name="exportfileformatchoice" id="exportfileformatchoice" value="custom" <?php if($_POST['exportfileformatchoice']=="custom") echo "checked"; ?>>Custom:&nbsp;&nbsp;<input type="text" name="customfilename" id="customfilename" style="width: 150px; text-align: left;" <?php if($_POST['customfilename']){ echo " value=\"{$_POST['customfilename']}\""; } else { echo " value=\"<ip>_<name>_Network-Info\""; } ?> /></td>
+								</tr>
+							</table>
+						</td>
+					</tr>
 				</table>
 			</td>
 		</tr>
@@ -468,10 +486,19 @@
 					document.getElementById("addfeaturesextra").style.display="table-row";
 				} else {
 					document.getElementById("addfeaturesextra").style.display="none";
+					document.getElementById("exportfileformatrowextra").style.display="none";
 					document.getElementById("cdpname").checked = false;
 					document.getElementById("cdpip").checked = false;
 					document.getElementById("cdpdev").checked = false;
 					document.getElementById("cdpint").checked = false;
+					document.getElementById("exportfileformatrow").checked = false;
+				}
+			}
+			function toggleFileFormats() {
+				if (document.getElementById("exportfileformatrowextra").style.display=="none") {
+					document.getElementById("exportfileformatrowextra").style.display="table-row";
+				} else {
+					document.getElementById("exportfileformatrowextra").style.display="none";
 				}
 			}
 		</script>
@@ -2340,14 +2367,33 @@
 							$_SESSION['freezepanearnum']=1;
 						}
 						//Properties for excel file
-						$excelpropertiesar=array(
-							 "setTitle"=>"$theip",
-							 "setSubject"=>"Network Info",
-							 "setDescription"=>"Network Info",
-							 "setKeywords"=>"Network Info",
-							 "setCategory"=>"Network Info",
-							 "filename"=>"netinfo.xlsx"
-						);
+						if($_POST['exportfileformatrow']){
+							list($devtempname,$junk)=explode('.',$testsnmp,2);
+							if($_POST['exportfileformatchoice']=="ipname"){
+								$subjectstring="$theip - $devtempname - Network Info";
+							} else if($_POST['exportfileformatchoice']=="nameip"){
+								$subjectstring="$devtempname - $theip - Network Info";
+							} else if($_POST['exportfileformatchoice']=="custom"){
+								$subjectstring=preg_replace('/<name>/',$devtempname,preg_replace('/<ip>/',$theip,$_POST['customfilename']));
+							}
+							$excelpropertiesar=array(
+								 "setTitle"=>"$theip",
+								 "setDescription"=>"Network Info",
+								 "setSubject"=>"$subjectstring",
+								 "setKeywords"=>"Network Info",
+								 "setCategory"=>"Network Info",
+								 "filename"=>"netinfo.xlsx"
+							);
+						} else {
+							$excelpropertiesar=array(
+								 "setTitle"=>"$theip",
+								 "setDescription"=>"Network Info",
+								 "setSubject"=>"Network Info",
+								 "setKeywords"=>"Network Info",
+								 "setCategory"=>"Network Info",
+								 "filename"=>"netinfo.xlsx"
+							);
+						}
 						$_SESSION['excelpropertiesar']=$excelpropertiesar;
 						//Export XLSX Button
 						if(sizeof($excelar)>0){
