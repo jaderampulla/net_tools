@@ -361,7 +361,7 @@
 						<td colspan="3"><input name="hidemacciscotrunk" id="hidemacciscotrunk" type="checkbox" <?php if($_POST['hidemacciscotrunk']) echo "checked"; ?> />&nbsp;Hide MAC's for Cisco Trunks</td>
 					</tr>
 					<tr>
-						<td colspan="3"><input name="hidemacintid" id="hidemacintid" type="checkbox" <?php if($_POST['hidemacintid']) echo "checked"; ?> />&nbsp;Hide MAC's for SNMP Int ID's (CSV List):&nbsp;&nbsp;<input type="text" name="hidemacintidval" id="hidemacintidval" style="width: 100px; text-align: left;" <?php if($_POST['hidemacintidval']) echo " value=\"{$_POST['hidemacintidval']}\""; ?> /></td>
+						<td colspan="3"><input name="hidemacintid" id="hidemacintid" type="checkbox" onclick="toggleClearCSVList()" <?php if($_POST['hidemacintid']) echo "checked"; ?> />&nbsp;Hide MAC's for SNMP Int ID's (CSV List):&nbsp;&nbsp;<input type="text" name="hidemacintidval" id="hidemacintidval" style="width: 100px; text-align: left;" <?php if($_POST['hidemacintid'] && $_POST['hidemacintidval']) echo " value=\"{$_POST['hidemacintidval']}\""; ?> /></td>
 					</tr>
 				</table>
 			</td>
@@ -378,6 +378,9 @@
 					document.getElementById("hidemacintid").checked = false;
 					document.getElementById("hidemacintidval").value = null;
 				}
+			}
+			function toggleClearCSVList() {
+				document.getElementById("hidemacintidval").value = null;
 			}
 		</script>
 		
