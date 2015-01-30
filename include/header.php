@@ -61,7 +61,9 @@
 	<title><?php echo "NetTools - $title"; ?></title>
 </head>
 <?php
-$widthmod="";
+if(!$widthmodset){
+	$widthmod="";
+}
 if($title=="SQL Syslog Query"){
 	echo "<body {$widthmod}onload=\"init();\">\n";
 } else {

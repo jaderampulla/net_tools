@@ -8,6 +8,39 @@
 	session_start();
 	$title="Router/Switch Info";
 	require("../include/options/snmpincludes.php");
+	//Adjust page width depending on what's selected
+	$widthmodset=true;
+	$basewidth=1200;
+	if($_POST['vlanchooser']){
+	}
+	if($_POST['clientmac']){
+		$basewidth+=200;
+	}
+	if($_POST['macoui']){
+		$basewidth+=400;
+	}
+	if($_POST['trafficstats']){
+		$basewidth+=200;
+	}
+	if($_POST['errorsdiscard']){
+		$basewidth+=350;
+	}
+	if($_POST['debugintid']){
+		$basewidth+=100;
+	}
+	if($_POST['cdpname']){
+		$basewidth+=300;
+	}
+	if($_POST['cdpip']){
+		$basewidth+=100;
+	}
+	if($_POST['cdpdev']){
+		$basewidth+=200;
+	}
+	if($_POST['cdpint']){
+		$basewidth+=150;
+	}
+	$widthmod=" style=\"min-width: {$basewidth}px;\" ";
 	require("../include/header.php");
 	require ("../include/functions.php");
 	$time_start=microtime_float();
@@ -987,7 +1020,7 @@
 					$devdataar[]=array('System Uptime:',$sysuptime);
 					//Print system info
 					echo "<br /><b>System Name:</b> $testsnmp<br />\n";
-					echo "<b>System Description:</b> <div style=\"width: 50%;\">$sysdescr</div>\n";
+					echo "<b>System Description:</b> <div style=\"width: 500px;\">$sysdescr</div>\n";
 					echo "<b>System Contact:</b> $syscontact<br />\n";
 					echo "<b>System Location:</b> $syslocation<br />\n";
 					echo "<b>System Uptime:</b> $sysuptime<br /><br />\n";
