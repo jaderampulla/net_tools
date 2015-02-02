@@ -125,6 +125,8 @@ Array		***** The outside array (excelar) *****
 */
 $excelar=$_SESSION['excelar'];
 $freezepanearnum=$_SESSION['freezepanearnum'];
+$columnwidthar=$_SESSION['columnwidth'];
+$celltextwrapar=$_SESSION['celltextwrap'];
 //echo "<pre>";
 //print_r($excelar);
 //echo "</pre>";
@@ -210,9 +212,10 @@ foreach($excelar as $arnum=>$table){
 	/*** Start Custom Formatting ***/
 	//Auto size colums widths
 	foreach($headeralph as $alph){
-		$objPHPExcel->getActiveSheet()->getColumnDimension($alph)->setAutoSize(true);
+		if(!array_key_exists($alph,$columnwidthar)){
+			$objPHPExcel->getActiveSheet()->getColumnDimension($alph)->setAutoSize(true);
+		}
 	}
-
 	//Outline and set color background for table
 	$mytablestyle = new PHPExcel_Style();
 	$mytablestyle->applyFromArray(
@@ -246,6 +249,11 @@ foreach($excelar as $arnum=>$table){
 	}
 	//Add a blank row for spacing between multiple tables
 	$rowcounter+=1;
+}
+
+$objPHPExcel->getActiveSheet()->getColumnDimension('B')->setWidth(50);
+foreach($celltextwrapar as $celltextwrap){
+	$objPHPExcel->getActiveSheet()->getStyle($celltextwrap)->getAlignment()->setWrapText(true);
 }
 //If a freeze pane was specified
 //Code here: https://phpexcel.codeplex.com/discussions/26843

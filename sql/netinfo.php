@@ -2501,6 +2501,17 @@
 							);
 						}
 						$_SESSION['excelpropertiesar']=$excelpropertiesar;
+						//Adjustment for system description column width
+						if(strlen($sysdescr)>=40){
+							$columnwidthar=array(
+								 "B"=>"50"
+							);
+							$_SESSION['columnwidth']=$columnwidthar;
+							$celltextwrapar=array(
+								 "B3"
+							);
+							$_SESSION['celltextwrap']=$celltextwrapar;
+						}
 						//Export XLSX Button
 						if(sizeof($excelar)>0){
 							echo "&nbsp;<form action='../excel/multitabletoxls.php' method='post' style='display: inline;'>\n";
