@@ -11,13 +11,20 @@
 	//Adjust page width depending on what's selected
 	$widthmodset=true;
 	$basewidth=1250;
+	if($_POST['ciscointpoe']){
+		$basewidth+=200;
+	}
+	if($_POST['ciscointpoedev']){
+		$basewidth+=230;
+	}
 	if($_POST['vlanchooser']){
+		$basewidth+=300;
 	}
 	if($_POST['clientmac']){
 		$basewidth+=200;
 	}
 	if($_POST['macoui']){
-		$basewidth+=400;
+		$basewidth+=350;
 	}
 	if($_POST['clientarp'] && $_POST['ignoredns']){
 		$basewidth+=150;
@@ -40,10 +47,10 @@
 		$basewidth+=100;
 	}
 	if($_POST['cdpdev']){
-		$basewidth+=200;
+		$basewidth+=230;
 	}
 	if($_POST['cdpint']){
-		$basewidth+=150;
+		$basewidth+=180;
 	}
 	$widthmod=" style=\"min-width: {$basewidth}px;\" ";
 	require("../include/header.php");
@@ -452,18 +459,22 @@
 			<td>&nbsp;&nbsp;
 				<table border=0 style="display: inline-table;">
 					<tr>
-						<td><input name="cdpname" id="cdpname" type="checkbox" <?php if($_POST['cdpname']) echo "checked"; ?> />&nbsp;CDP Name</td>
-						<td><input name="cdpip" id="cdpip" type="checkbox" <?php if($_POST['cdpip']) echo "checked"; ?> />&nbsp;CDP IP</td>
-						<td><input name="cdpdev" id="cdpdev" type="checkbox" <?php if($_POST['cdpdev']) echo "checked"; ?> />&nbsp;CDP Device</td>
+						<td><input name="ciscointpoe" id="ciscointpoe" type="checkbox" <?php if($_POST['ciscointpoe']) echo "checked"; ?> />&nbsp;Cisco Interface PoE Stats</td>
+						<td><input name="ciscointpoedev" id="ciscointpoedev" type="checkbox" <?php if($_POST['ciscointpoedev']) echo "checked"; ?> />&nbsp;Cisco Interface PoE Device</td>
 					</tr>
 					<tr>
-						<td colspan="3"><input name="cdpint" id="cdpint" type="checkbox" <?php if($_POST['cdpint']) echo "checked"; ?> />&nbsp;CDP Remote Interface</td>
+						<td><input name="cdpname" id="cdpname" type="checkbox" <?php if($_POST['cdpname']) echo "checked"; ?> />&nbsp;CDP Name</td>
+						<td><input name="cdpip" id="cdpip" type="checkbox" <?php if($_POST['cdpip']) echo "checked"; ?> />&nbsp;CDP IP</td>
+					</tr>
+					<tr>
+						<td><input name="cdpdev" id="cdpdev" type="checkbox" <?php if($_POST['cdpdev']) echo "checked"; ?> />&nbsp;CDP Device</td>
+						<td><input name="cdpint" id="cdpint" type="checkbox" <?php if($_POST['cdpint']) echo "checked"; ?> />&nbsp;CDP Remote Interface</td>
 					</tr>
 					<tr>
 						<td colspan="3"><input name="exportfileformatrow" id="exportfileformatrow" type="checkbox" onclick="toggleFileFormats()" <?php if($_POST['exportfileformatrow']) echo "checked"; ?> />&nbsp;Adjust export file format</td>
 					</tr>
 					<tr name="exportfileformatrowextra" id="exportfileformatrowextra" <?php if($_POST['exportfileformatrow']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
-						<td colspan="3">&nbsp;&nbsp;
+						<td colspan="2">&nbsp;&nbsp;
 							<table border=0 style="display: inline-table;">
 								<tr>
 									<td><input type="radio" name="exportfileformatchoice" id="exportfileformatchoice" value="ipname" <?php if($_POST['exportfileformatchoice']=="ipname" || !$_POST['exportfileformatchoice']) echo "checked"; ?>>"&#60;ip&#62; -  &#60;name&#62; - Network Info"</td>
@@ -487,6 +498,8 @@
 				} else {
 					document.getElementById("addfeaturesextra").style.display="none";
 					document.getElementById("exportfileformatrowextra").style.display="none";
+					document.getElementById("ciscointpoe").checked = false;
+					document.getElementById("ciscointpoedev").checked = false;
 					document.getElementById("cdpname").checked = false;
 					document.getElementById("cdpip").checked = false;
 					document.getElementById("cdpdev").checked = false;
@@ -593,8 +606,11 @@
 				SNMPv2-SMI::enterprises.2272.1.3.2.1.6		- Avaya VLAN Index ID
 				1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5			- Juniper VLAN ID's
 				1.3.6.1.4.1.2636.3.40.1.5.1.7.1.5			- Juniper VLAN port mode
+				1.3.6.1.2.1.47.1.1.1.1.14					- Cisco interface alias
+				SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.x	- Cisco Interface PoE ID's
+				SNMPv2-SMI::enterprises.9.9.402.1.3.1.1		- Cisco PoE Switch Numbers
 				*/
-				if($snmpval && ($commandstring=="SNMPv2-SMI::transmission.7.2.1.19" || $commandstring=="SNMPv2-SMI::transmission.7.2.1.7" || $commandstring=="SNMPv2-SMI::enterprises.9.9.68.1.2.2.1.2" || strstr($commandstring,'SNMPv2-SMI::enterprises.2272.1.3.3.1') || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.13" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14" || $commandstring=="SNMPv2-SMI::mib-2.17.1.4.1.2" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.7.1.5" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2") || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.6"){
+				if($snmpval && ($commandstring=="SNMPv2-SMI::transmission.7.2.1.19" || $commandstring=="SNMPv2-SMI::transmission.7.2.1.7" || $commandstring=="SNMPv2-SMI::enterprises.9.9.68.1.2.2.1.2" || strstr($commandstring,'SNMPv2-SMI::enterprises.2272.1.3.3.1') || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.13" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14" || $commandstring=="SNMPv2-SMI::mib-2.17.1.4.1.2" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.7.1.5" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2") || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.6" || $commandstring=="1.3.6.1.2.1.47.1.1.1.1.14" || strstr($commandstring,'SNMPv2-SMI::mib-2.105.1.1.1.9.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.7.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.10.') || $commandstring=="SNMPv2-SMI::enterprises.9.9.402.1.3.1.1"){
 					list($remain,$val)=explode(' ',$snmpval,2);
 					//Get ID by reversing string and exploding on first instance of "."
 					list($id,$junk)=explode(".",strrev($remain));
@@ -687,7 +703,7 @@
 					Cisco VLAN Name
 					Avaya VLAN Name
 					*/
-					} else if($commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2"){
+					} else if($commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2" || $commandstring=="1.3.6.1.2.1.47.1.1.1.1.14" || strstr($commandstring,'SNMPv2-SMI::mib-2.105.1.1.1.9.')){
 						$val=trim(preg_replace('/\"/','',$val));
 					} else if($commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1"){
 						if($val==1){
@@ -698,6 +714,13 @@
 							$val="mtuTooBigForDevice";
 						} else if($val==4){
 							$val="mtuTooBigForTrunk";
+						}
+					//Cisco interface PoE available power
+					} else if(strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.7.')){
+						$val=number_format(round(((trim($val))/1000),1),1);
+					} else if(strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.10.')){
+						if($val>0){
+							$val=number_format(round(((trim($val))/1000),2),2);
 						}
 					}
 					$finar[$id]=$val;
@@ -919,7 +942,6 @@
 				} else if($snmpval && ($commandstring=="SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.6" || $commandstring=="SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.8" || $commandstring=="SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.7")){
 					list($id,$val)=explode(' ',$snmpval,2);
 					$val=trim(preg_replace('/"/','',$val));
-					//list($id,$remain)=explode('.',$id)[10];
 					if($commandstring=="SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.6"){
 						$id=trim(preg_replace('/enterprises.9.9.23.1.2.1.1.6./','',$id));
 					} else if($commandstring=="SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.8"){
@@ -1886,6 +1908,73 @@
 							echo "<pre><font style=\"color: red;\">"; print_r($cdpintar); echo "</font></pre>";
 						}
 					}
+					
+					if($_POST['ciscointpoe'] || $_POST['ciscointpoedev']){
+						//Grab entPhysicalAlias ID's
+						$entPhysicalAliasar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.2.1.47.1.1.1.1.14",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$poeswitchnumar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.402.1.3.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						foreach($poeswitchnumar as $switchnum=>$junkid){
+							//Grab mapping of PoE MIB interface ID to entPhysicalAlias ID for each switch
+							$ciscointpoeidtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.$switchnum",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							foreach($ciscointpoeidtempar as $intpoeid=>$intpoe){
+								$ciscointpoeidar[$switchnum][$intpoeid]=$intpoe;
+							}
+						}
+					}
+					if($_POST['ciscointpoe']){
+						//Loop through each PoE capable switch
+						foreach($poeswitchnumar as $switchnum=>$junkid){
+							unset($ciscointpoeavailtempar);
+							//Grab PoE interface stats for available PoE power on each port (Organized by an ID within the PoE MIB)
+							$ciscointpoeavailtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.402.1.2.1.7.$switchnum",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							//Create array for current switch
+							foreach($ciscointpoeavailtempar as $availid=>$avail){
+								$ciscointpoeavailar[$switchnum][$availid]=$avail;
+							}
+							unset($ciscointpoeactualtempar);
+							//Grab PoE interface stats for actual used PoE power on each port (Organized by an ID within the PoE MIB)
+							$ciscointpoeactualtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.402.1.2.1.10.$switchnum",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							//Create array for current switch
+							foreach($ciscointpoeactualtempar as $actualid=>$actual){
+								$ciscointpoeactualar[$switchnum][$actualid]=$actual;
+							}
+							//Create array of interface ID to available PoE
+							foreach($ciscointpoeavailar as $switchid=>$availar){
+								foreach($availar as $availid=>$poeavail){
+									$ciscopoeavailar[$entPhysicalAliasar[$ciscointpoeidar[$switchid][$availid]]]=$poeavail;
+								}
+							}
+							//Create array of interface ID to actual used PoE
+							foreach($ciscointpoeactualar as $switchid=>$actualar){
+								foreach($actualar as $actualid=>$poeactual){
+									$ciscopoeactualar[$entPhysicalAliasar[$ciscointpoeidar[$switchid][$actualid]]]=$poeactual;
+								}
+							}
+						}
+						if($_POST['debug'] && $_POST['debugoutput']){
+							echo "<pre><font style=\"color: red;\">"; print_r($ciscopoeavailar); echo "</font></pre>";
+							echo "<pre><font style=\"color: red;\">"; print_r($ciscopoeactualar); echo "</font></pre>";
+						}
+					}
+					if($_POST['ciscointpoedev']){
+						foreach($poeswitchnumar as $switchnum=>$junkid){
+							unset($ciscointpoedevar);
+							//Grab PoE device on each port (Organized by an ID within the PoE MIB)
+							$ciscointpoedevtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.105.1.1.1.9.$switchnum",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							foreach($ciscointpoedevtempar as $devid=>$dev){
+								$ciscointpoedevar[$switchnum][$devid]=$dev;
+							}
+							//Create array of interface ID to PoE device
+							foreach($ciscointpoedevar as $switchid=>$devar){
+								foreach($devar as $devid=>$poedev){
+									$ciscopoedevar[$entPhysicalAliasar[$ciscointpoeidar[$switchid][$devid]]]=$poedev;
+								}
+							}
+							if($_POST['debug'] && $_POST['debugoutput']){
+								echo "<pre><font style=\"color: red;\">"; print_r($ciscopoedevar); echo "</font></pre>";
+							}
+						}
+					}
 					if($_POST['debug']){
 						echo "<br />\n";
 					}
@@ -1988,6 +2077,15 @@
 						if(!$_POST['hideduplex']){
 							$headerar[]="Duplex";
 							$dataarstring=$dataarstring . ',$ifduplexar[$theid]';
+						}
+						if($_POST['ciscointpoe']){
+							$headerar[]="PoE Available";
+							$headerar[]="PoE Used";
+							$dataarstring=$dataarstring . ',$ciscopoeavailar[$theid],$ciscopoeactualar[$theid]';
+						}
+						if($_POST['ciscointpoedev']){
+							$headerar[]="PoE Device";
+							$dataarstring=$dataarstring . ',$ciscopoedevar[$theid]';
 						}
 						if($_POST['vlanchooser'] && $_POST['vlanchoice']=="cisco"){
 							$headerar[]="VLAN";
@@ -2093,6 +2191,13 @@
 									} else {
 										echo "<td>" . $ifduplexar[$theid] . "</td>";
 									}
+								}
+								if($_POST['ciscointpoe']){
+									echo "<td>" . $ciscopoeavailar[$theid] . "</td>";
+									echo "<td>" . $ciscopoeactualar[$theid] . "</td>";
+								}
+								if($_POST['ciscointpoedev']){
+									echo "<td>" . $ciscopoedevar[$theid] . "</td>";
 								}
 								if($_POST['vlanchooser'] && $_POST['vlanchoice']=="cisco"){
 									echo "<td>" . $ciscovlanar[$theid] . "</td>";
@@ -2368,6 +2473,7 @@
 						}
 						//Properties for excel file
 						if($_POST['exportfileformatrow']){
+							$devtempname="";
 							list($devtempname,$junk)=explode('.',$testsnmp,2);
 							if($_POST['exportfileformatchoice']=="ipname"){
 								$subjectstring="$theip - $devtempname - Network Info";
@@ -2379,7 +2485,7 @@
 							$excelpropertiesar=array(
 								 "setTitle"=>"$theip",
 								 "setDescription"=>"Network Info",
-								 "setSubject"=>"$subjectstring",
+								 "setSubject"=>$subjectstring,
 								 "setKeywords"=>"Network Info",
 								 "setCategory"=>"Network Info",
 								 "filename"=>"netinfo.xlsx"
