@@ -609,8 +609,9 @@
 				1.3.6.1.2.1.47.1.1.1.1.14					- Cisco interface alias
 				SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.x	- Cisco Interface PoE ID's
 				SNMPv2-SMI::enterprises.9.9.402.1.3.1.1		- Cisco PoE Switch Numbers
+				SNMPv2-SMI::mib-2.47.1.1.1.1.7				- Cisco Interface PoE ID's (For translation to another ID table)...come on Cisco!
 				*/
-				if($snmpval && ($commandstring=="SNMPv2-SMI::transmission.7.2.1.19" || $commandstring=="SNMPv2-SMI::transmission.7.2.1.7" || $commandstring=="SNMPv2-SMI::enterprises.9.9.68.1.2.2.1.2" || strstr($commandstring,'SNMPv2-SMI::enterprises.2272.1.3.3.1') || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.13" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14" || $commandstring=="SNMPv2-SMI::mib-2.17.1.4.1.2" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.7.1.5" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2") || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.6" || $commandstring=="1.3.6.1.2.1.47.1.1.1.1.14" || strstr($commandstring,'SNMPv2-SMI::mib-2.105.1.1.1.9.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.7.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.10.') || $commandstring=="SNMPv2-SMI::enterprises.9.9.402.1.3.1.1"){
+				if($snmpval && ($commandstring=="SNMPv2-SMI::transmission.7.2.1.19" || $commandstring=="SNMPv2-SMI::transmission.7.2.1.7" || $commandstring=="SNMPv2-SMI::enterprises.9.9.68.1.2.2.1.2" || strstr($commandstring,'SNMPv2-SMI::enterprises.2272.1.3.3.1') || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.13" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14" || $commandstring=="SNMPv2-SMI::mib-2.17.1.4.1.2" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.7.1.5" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2") || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.6" || $commandstring=="1.3.6.1.2.1.47.1.1.1.1.14" || strstr($commandstring,'SNMPv2-SMI::mib-2.105.1.1.1.9.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.8.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.10.') || $commandstring=="SNMPv2-SMI::enterprises.9.9.402.1.3.1.1" || $commandstring=="SNMPv2-SMI::mib-2.47.1.1.1.1.7"){
 					list($remain,$val)=explode(' ',$snmpval,2);
 					//Get ID by reversing string and exploding on first instance of "."
 					list($id,$junk)=explode(".",strrev($remain));
@@ -703,7 +704,7 @@
 					Cisco VLAN Name
 					Avaya VLAN Name
 					*/
-					} else if($commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2" || $commandstring=="1.3.6.1.2.1.47.1.1.1.1.14" || strstr($commandstring,'SNMPv2-SMI::mib-2.105.1.1.1.9.')){
+					} else if($commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2" || $commandstring=="1.3.6.1.2.1.47.1.1.1.1.14" || strstr($commandstring,'SNMPv2-SMI::mib-2.105.1.1.1.9.') || $commandstring=="SNMPv2-SMI::mib-2.47.1.1.1.1.7"){
 						$val=trim(preg_replace('/\"/','',$val));
 					} else if($commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1"){
 						if($val==1){
@@ -716,7 +717,7 @@
 							$val="mtuTooBigForTrunk";
 						}
 					//Cisco interface PoE available power
-					} else if(strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.7.')){
+					} else if(strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.8.')){
 						$val=number_format(round(((trim($val))/1000),1),1);
 					} else if(strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.10.')){
 						if($val>0){
@@ -1908,10 +1909,22 @@
 							echo "<pre><font style=\"color: red;\">"; print_r($cdpintar); echo "</font></pre>";
 						}
 					}
-					
+					//Good article on total switch power - http://forum.nedi.ch/index.php?topic=600.0
 					if($_POST['ciscointpoe'] || $_POST['ciscointpoedev']){
 						//Grab entPhysicalAlias ID's
 						$entPhysicalAliasar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.2.1.47.1.1.1.1.14",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						//Check if the array has any values for PoE interface ID to ifDescr ID. If not, need to use alternate method to get 
+						$poeidcheck=true;
+						if(count(array_filter($entPhysicalAliasar))==0){
+							$poeidcheck=false;
+							$ifpoeidtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.47.1.1.1.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							foreach($ifpoeidtempar as $tempid=>$intname){
+								if(in_array($intname,$ifdescar)){
+									//Mash arrays together...identify PoE interface ID to ifDescr interface ID
+									$ifpoeidaltar[$tempid]=array_search($intname,$ifdescar);
+								}
+							}
+						}
 						$poeswitchnumar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.402.1.3.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
 						foreach($poeswitchnumar as $switchnum=>$junkid){
 							//Grab mapping of PoE MIB interface ID to entPhysicalAlias ID for each switch
@@ -1926,7 +1939,8 @@
 						foreach($poeswitchnumar as $switchnum=>$junkid){
 							unset($ciscointpoeavailtempar);
 							//Grab PoE interface stats for available PoE power on each port (Organized by an ID within the PoE MIB)
-							$ciscointpoeavailtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.402.1.2.1.7.$switchnum",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							//Used to use .1.2.1.7 but changed to .1.2.1.8....7 shows power from power supply and 8 shows power sent to device
+							$ciscointpoeavailtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.402.1.2.1.8.$switchnum",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
 							//Create array for current switch
 							foreach($ciscointpoeavailtempar as $availid=>$avail){
 								$ciscointpoeavailar[$switchnum][$availid]=$avail;
@@ -1941,13 +1955,21 @@
 							//Create array of interface ID to available PoE
 							foreach($ciscointpoeavailar as $switchid=>$availar){
 								foreach($availar as $availid=>$poeavail){
-									$ciscopoeavailar[$entPhysicalAliasar[$ciscointpoeidar[$switchid][$availid]]]=$poeavail;
+									if($poeidcheck==true){
+										$ciscopoeavailar[$entPhysicalAliasar[$ciscointpoeidar[$switchid][$availid]]]=$poeavail;
+									} else {
+										$ciscopoeavailar[$ifpoeidaltar[$ciscointpoeidar[$switchid][$availid]]]=$poeavail;
+									}
 								}
 							}
 							//Create array of interface ID to actual used PoE
 							foreach($ciscointpoeactualar as $switchid=>$actualar){
 								foreach($actualar as $actualid=>$poeactual){
-									$ciscopoeactualar[$entPhysicalAliasar[$ciscointpoeidar[$switchid][$actualid]]]=$poeactual;
+									if($poeidcheck==true){
+										$ciscopoeactualar[$entPhysicalAliasar[$ciscointpoeidar[$switchid][$actualid]]]=$poeactual;
+									} else {
+										$ciscopoeactualar[$ifpoeidaltar[$ciscointpoeidar[$switchid][$actualid]]]=$poeactual;
+									}
 								}
 							}
 						}
@@ -1967,7 +1989,11 @@
 							//Create array of interface ID to PoE device
 							foreach($ciscointpoedevar as $switchid=>$devar){
 								foreach($devar as $devid=>$poedev){
-									$ciscopoedevar[$entPhysicalAliasar[$ciscointpoeidar[$switchid][$devid]]]=$poedev;
+									if($poeidcheck==true){
+										$ciscopoedevar[$entPhysicalAliasar[$ciscointpoeidar[$switchid][$devid]]]=$poedev;
+									} else {
+										$ciscopoedevar[$ifpoeidaltar[$ciscointpoeidar[$switchid][$devid]]]=$poedev;
+									}
 								}
 							}
 							if($_POST['debug'] && $_POST['debugoutput']){
