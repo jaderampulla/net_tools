@@ -1138,6 +1138,9 @@
 						foreach($ifdescartemptemp as $id=>$desc){
 							if(!stristr($desc,'VLAN')){
 								$ifdescartemp[$id]=$desc;
+							} else {
+								//Used to keep track of SNMP ID's for L3 VLAN interfaces
+								$vlanifdesc[$id]=preg_replace('/Vlan/','',$desc);
 							}
 						}
 					}
@@ -1200,7 +1203,6 @@
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ifduplexar); echo "</font></pre>";
 						}
-						//echo "<pre>"; print_r($ifduplexar); echo "COUNTSPEEDAR: " . count($ifspeedar); echo "</pre>";
 					}
 					if($_POST['vlanchooser'] && $_POST['vlanchoice']=="cisco"){
 						//VLAN MIB here: https://supportforums.cisco.com/thread/164782
@@ -1249,9 +1251,11 @@
 							$l3vlanaddrartemp=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IP-MIB::ipAdEntIfIndex",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
 							ksort($l3vlanaddrartemp);
 							//Map ifdesc ID to VLAN number
-							foreach($ifdescar as $k=>$v){
-								if(strstr($v,'Vlan')){
-									$vlanifdesc[$k]=preg_replace('/Vlan/','',$v);;
+							if(!$_POST['hidevlanint']){
+								foreach($ifdescar as $k=>$v){
+									if(strstr($v,'Vlan')){
+										$vlanifdesc[$k]=preg_replace('/Vlan/','',$v);
+									}
 								}
 							}
 							foreach($l3vlanaddrartemp as $vlanidtemp=>$vlanip){
