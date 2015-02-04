@@ -428,6 +428,9 @@
 						<td><input name="hidevlanint" id="hidevlanint" type="checkbox" <?php if($_POST['hidevlanint']) echo "checked"; ?> />&nbsp;VLAN Interfaces</td>
 					</tr>
 					<tr>
+						<td colspan="3"><input name="hideintid" id="hideintid" type="checkbox" <?php if($_POST['hideintid']) echo "checked"; ?> />&nbsp;Hide SNMP Int ID's (CSV List):&nbsp;&nbsp;<input type="text" name="hideintidval" id="hideintidval" style="width: 100px; text-align: left;" <?php if($_POST['hideintid'] && $_POST['hideintidval']) echo " value=\"{$_POST['hideintidval']}\""; ?> /></td>
+					</tr>
+					<tr>
 						<td colspan="3"><input name="hidemacciscotrunk" id="hidemacciscotrunk" type="checkbox" <?php if($_POST['hidemacciscotrunk']) echo "checked"; ?> />&nbsp;Hide MAC's for Cisco Trunks</td>
 					</tr>
 					<tr>
@@ -1108,6 +1111,18 @@
 					$excelar[]=array($devheaderar,$devdataar);
 					//Get all the necessary interface info
 					$ifdescartemp=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifDescr",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+					//Hide SNMP interface ID's
+					if($_POST['hideintid'] && $_POST['hideintidval']){
+						unset($ifdescartemptemp);
+						$ifdescartemptemp=$ifdescartemp;
+						unset($ifdescartemp);
+						$hideintidar=explode(',',$_POST['hideintidval']);
+						foreach($ifdescartemptemp as $id=>$desc){
+							if(!in_array($id,$hideintidar)){
+								$ifdescartemp[$id]=$desc;
+							}
+						}
+					}
 					//Hide Null interfaces
 					if($_POST['hidenull']){
 						unset($ifdescartemptemp);
