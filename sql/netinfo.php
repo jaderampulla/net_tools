@@ -428,13 +428,13 @@
 						<td><input name="hidevlanint" id="hidevlanint" type="checkbox" <?php if($_POST['hidevlanint']) echo "checked"; ?> />&nbsp;VLAN Interfaces</td>
 					</tr>
 					<tr>
-						<td colspan="3"><input name="hideintid" id="hideintid" type="checkbox" <?php if($_POST['hideintid']) echo "checked"; ?> />&nbsp;Hide SNMP Int ID's (CSV List):&nbsp;&nbsp;<input type="text" name="hideintidval" id="hideintidval" style="width: 100px; text-align: left;" <?php if($_POST['hideintid'] && $_POST['hideintidval']) echo " value=\"{$_POST['hideintidval']}\""; ?> /></td>
+						<td colspan="3"><input name="hideintid" id="hideintid" type="checkbox" <?php if($_POST['hideintid']) echo "checked"; ?> />&nbsp;SNMP Interface ID's (CSV's):&nbsp;&nbsp;<input type="text" name="hideintidval" id="hideintidval" style="width: 100px; text-align: left;" <?php if($_POST['hideintid'] && $_POST['hideintidval']) echo " value=\"{$_POST['hideintidval']}\""; ?> /></td>
 					</tr>
 					<tr>
-						<td colspan="3"><input name="hidemacciscotrunk" id="hidemacciscotrunk" type="checkbox" <?php if($_POST['hidemacciscotrunk']) echo "checked"; ?> />&nbsp;Hide MAC's for Cisco Trunks</td>
+						<td colspan="3"><input name="hidemacciscotrunk" id="hidemacciscotrunk" type="checkbox" <?php if($_POST['hidemacciscotrunk']) echo "checked"; ?> />&nbsp;MAC's for Cisco Trunks</td>
 					</tr>
 					<tr>
-						<td colspan="3"><input name="hidemacintid" id="hidemacintid" type="checkbox" onclick="toggleClearCSVList()" <?php if($_POST['hidemacintid']) echo "checked"; ?> />&nbsp;Hide MAC's for SNMP Int ID's (CSV List):&nbsp;&nbsp;<input type="text" name="hidemacintidval" id="hidemacintidval" style="width: 100px; text-align: left;" <?php if($_POST['hidemacintid'] && $_POST['hidemacintidval']) echo " value=\"{$_POST['hidemacintidval']}\""; ?> /></td>
+						<td colspan="3"><input name="hidemacintid" id="hidemacintid" type="checkbox" onclick="toggleClearCSVList()" <?php if($_POST['hidemacintid']) echo "checked"; ?> />&nbsp;MAC's for SNMP Interface ID's (CSV's):&nbsp;&nbsp;<input type="text" name="hidemacintidval" id="hidemacintidval" style="width: 100px; text-align: left;" <?php if($_POST['hidemacintid'] && $_POST['hidemacintidval']) echo " value=\"{$_POST['hidemacintidval']}\""; ?> /></td>
 					</tr>
 				</table>
 			</td>
