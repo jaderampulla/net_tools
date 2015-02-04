@@ -57,6 +57,10 @@
 		echo "</script>\n";
 		
 	}
+	if($title=="Router/Switch Info"){
+		echo "<script type=\"text/javascript\" src=\"/include/js/jquery-1.5.1.min.js\"></script>\n";
+		echo "\t<script type=\"text/javascript\" src=\"/include/js/jquery.thfloat-0.7.2.js\"></script>\n";
+	}
 	?>
 	<title><?php echo "NetTools - $title"; ?></title>
 </head>

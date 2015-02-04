@@ -57,6 +57,31 @@
 	require ("../include/functions.php");
 	$time_start=microtime_float();
 	?>
+	<style type='text/css'>
+		table.output {
+			border-spacing: 3px;
+		}
+		.output th {
+			color: black;
+			padding: 2px 4px;
+			text-align: left;
+			border-width: 1px;
+			border-spacing: 4px;
+			border-style: outset;
+			border-color: gray;
+			background-color: #A9A9A9;
+		}
+		.output td {
+			color: black;
+			padding: 2px 4px;
+			text-align: left;
+			border-width: 1px;
+			border-spacing: 4px;
+			border-style: outset;
+			border-color: gray;
+			background-color: #DCDCDC;
+		}
+	</style>
 	<br />
 	<script type="text/javascript">
 		//Check all functions to grey out any boxes
@@ -2023,13 +2048,13 @@
 								$vlanheaderar[]="Port Members";
 								$vlanarstring=$vlanarstring . ',$vlanmembersar[$vlanid]';
 							}
-							echo "<table border=1>\n";
-							echo "<tr>";
+							echo "<table class=\"output\" id=\"floater\">\n";
+							echo "<thead><tr>";
 							//Print out headerar for table
 							foreach($vlanheaderar as $header){
 								echo "<th>$header</th>";
 							}
-							echo "</tr>\n";
+							echo "</tr></thead><tbody>\n";
 							foreach($vlannamear as $vlanid=>$vlanname){
 								echo "<tr>";
 								echo "<td>$vlanid</td>";
@@ -2072,7 +2097,12 @@
 								eval('$vlandataar[] = array(' . $vlanarstring . ');');
 							}
 							$excelar[]=array($vlanheaderar,$vlandataar);
-							echo "</table><br />\n";
+							echo "</tbody><tfoot></tfoot></table><br />\n";
+							?>
+							<script>
+							$("#floater").thfloat();
+							</script>
+							<?php
 						}
 						
 						//Headerar used for Excel export
@@ -2192,13 +2222,13 @@
 							$headerar[]="CDP Remote Interface";
 							$dataarstring=$dataarstring . ',$cdpintar[$theid]';
 						}
-						echo "<table border=1>\n";
-						echo "<tr>";
+						echo "<table class=\"output\" id=\"floater2\">\n";
+						echo "<thead><tr>";
 						//Print out headerar for table
 						foreach($headerar as $header){
 							echo "<th>$header</th>";
 						}
-						echo "</tr>\n";
+						echo "</tr></thead><tbody>\n";
 						foreach($ifdescar as $theid => $ifdesc){
 							if($ifdesc){
 								echo "<tr>";
@@ -2461,7 +2491,12 @@
 								eval('$dataar[] = array(' . $dataarstring . ');');
 							}
 						}
-						echo "</table><br />\n";
+						echo "</tbody><tfoot></tfoot></table><br />\n";
+						?>
+						<script>
+						$("#floater2").thfloat();
+						</script>
+						<?php
 						//Add system table to Excel Array for multi-table printout format
 						$excelar[]=array($headerar,$dataar);
 						if($_POST['showarp'] && sizeof($arpar)>2){
