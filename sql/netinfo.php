@@ -366,9 +366,16 @@
 			<td><input name="statsrow" id="statsrow" type="checkbox" onclick="toggleStatsRow()" <?php if($_POST['statsrow']) echo "checked"; ?> />&nbsp;Show Interface Stats</td>
 		</tr>
 		<tr name="statsrowextra" id="statsrowextra" <?php if($_POST['statsrow']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
-			<td>
-				&nbsp;&nbsp;&nbsp;&nbsp;<input name="trafficstats" id="trafficstats" type="checkbox" <?php if($_POST['trafficstats']) echo "checked"; ?> />&nbsp;Traffic&nbsp;&nbsp;
-				<input name="errorsdiscard" id="errorsdiscard" type="checkbox" <?php if($_POST['errorsdiscard']) echo "checked"; ?> />&nbsp;Errors and Discards
+			<td>&nbsp;&nbsp;
+				<table border=0 style="display: inline-table;">
+					<tr>
+						<td><input name="trafficstats" id="trafficstats" type="checkbox" <?php if($_POST['trafficstats']) echo "checked"; ?> />&nbsp;Traffic</td>
+						<td><input name="errorsdiscard" id="errorsdiscard" type="checkbox" <?php if($_POST['errorsdiscard']) echo "checked"; ?> />&nbsp;Errors and Discards</td>
+					</tr>
+					<tr>
+						<td colspan="2"><input name="ciscopps" id="ciscopps" type="checkbox" <?php if($_POST['ciscopps']) echo "checked"; ?> />&nbsp;Cisco PPS (5 min average)</td>
+					</tr>
+				</table>
 			</td>
 		</tr>
 		<script type="text/javascript">
@@ -379,6 +386,7 @@
 					document.getElementById("statsrowextra").style.display="none";
 					document.getElementById("trafficstats").checked = false;
 					document.getElementById("errorsdiscard").checked = false;
+					document.getElementById("ciscopps").checked = false;
 				}
 			}
 		</script>
@@ -639,7 +647,7 @@
 				SNMPv2-SMI::enterprises.9.9.402.1.3.1.1		- Cisco PoE Switch Numbers
 				SNMPv2-SMI::mib-2.47.1.1.1.1.7				- Cisco Interface PoE ID's (For translation to another ID table)...come on Cisco!
 				*/
-				if($snmpval && ($commandstring=="SNMPv2-SMI::transmission.7.2.1.19" || $commandstring=="SNMPv2-SMI::transmission.7.2.1.7" || $commandstring=="SNMPv2-SMI::enterprises.9.9.68.1.2.2.1.2" || strstr($commandstring,'SNMPv2-SMI::enterprises.2272.1.3.3.1') || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.13" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14" || $commandstring=="SNMPv2-SMI::mib-2.17.1.4.1.2" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.7.1.5" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2") || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.6" || $commandstring=="1.3.6.1.2.1.47.1.1.1.1.14" || strstr($commandstring,'SNMPv2-SMI::mib-2.105.1.1.1.9.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.8.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.10.') || $commandstring=="SNMPv2-SMI::enterprises.9.9.402.1.3.1.1" || $commandstring=="SNMPv2-SMI::mib-2.47.1.1.1.1.7"){
+				if($snmpval && ($commandstring=="SNMPv2-SMI::transmission.7.2.1.19" || $commandstring=="SNMPv2-SMI::transmission.7.2.1.7" || $commandstring=="SNMPv2-SMI::enterprises.9.9.68.1.2.2.1.2" || strstr($commandstring,'SNMPv2-SMI::enterprises.2272.1.3.3.1') || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.13" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14" || $commandstring=="SNMPv2-SMI::mib-2.17.1.4.1.2" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.7.1.5" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2") || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.6" || $commandstring=="1.3.6.1.2.1.47.1.1.1.1.14" || strstr($commandstring,'SNMPv2-SMI::mib-2.105.1.1.1.9.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.8.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.10.') || $commandstring=="SNMPv2-SMI::enterprises.9.9.402.1.3.1.1" || $commandstring=="SNMPv2-SMI::mib-2.47.1.1.1.1.7" || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.7') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.9')){
 					list($remain,$val)=explode(' ',$snmpval,2);
 					//Get ID by reversing string and exploding on first instance of "."
 					list($id,$junk)=explode(".",strrev($remain));
@@ -1929,6 +1937,16 @@
 							echo "<pre><font style=\"color: red;\">"; print_r($ifoutdiscardsar); echo "</font></pre>";
 						}
 					}
+					if($_POST['ciscopps']){
+						$ciscoppsinar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.9.2.2.1.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						if($_POST['debug'] && $_POST['debugoutput']){
+							echo "<pre><font style=\"color: red;\">"; print_r($ciscoppsinar); echo "</font></pre>";
+						}
+						$ciscoppsoutar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.9.2.2.1.1.9",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						if($_POST['debug'] && $_POST['debugoutput']){
+							echo "<pre><font style=\"color: red;\">"; print_r($ciscoppsoutar); echo "</font></pre>";
+						}
+					}
 					if($_POST['cdpname']){
 						$cdpnamear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
 						if($_POST['debug'] && $_POST['debugoutput']){
@@ -2225,6 +2243,11 @@
 							$headerar[]="Out Discards";
 							$dataarstring=$dataarstring . ',$ifinerrorsar[$theid],$ifouterrorsar[$theid],$ifindiscardsar[$theid],$ifoutdiscardsar[$theid]';
 						}
+						if($_POST['ciscopps']){
+							$headerar[]="PPS In";
+							$headerar[]="PPS Out";
+							$dataarstring=$dataarstring . ',$ciscoppsinar[$theid],$ciscoppsoutar[$theid]';
+						}
 						if($_POST['cdpname']){
 							$headerar[]="CDP Name";
 							$dataarstring=$dataarstring . ',$cdpnamear[$theid]';
@@ -2489,6 +2512,10 @@
 									} else {
 										echo "<td>" . $ifoutdiscardsar[$theid] . "</td>";
 									}
+								}
+								if($_POST['ciscopps']){
+									echo "<td>" . $ciscoppsinar[$theid] . "</td>";
+									echo "<td>" . $ciscoppsoutar[$theid] . "</td>";
 								}
 								if($_POST['cdpname']){
 									echo "<td>" . $cdpnamear[$theid] . "</td>";
