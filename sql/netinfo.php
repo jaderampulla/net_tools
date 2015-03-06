@@ -3,6 +3,8 @@
 	Windows OpenSSL here: http://slproweb.com/products/Win32OpenSSL.html
 	Windows SNMP here: http://sourceforge.net/projects/net-snmp/files/net-snmp%20binaries/5.5-binaries/
 	Be sure to use an OpenSSL version less than 1.0 for compatibility with encryption support (SNMPv3) in the Net-SNMP tools
+	Good IF-MIB reference: http://www.net-snmp.org/docs/mibs/interfaces.html
+	Review total bandwidth calculation from this link: https://supportforums.cisco.com/discussion/10126841/snmp-oid-bandwidth-usage
 	*/
 	error_reporting(E_ERROR | E_WARNING | E_PARSE);
 	session_start();
@@ -369,11 +371,14 @@
 			<td>&nbsp;&nbsp;
 				<table border=0 style="display: inline-table;">
 					<tr>
-						<td><input name="trafficstats" id="trafficstats" type="checkbox" <?php if($_POST['trafficstats']) echo "checked"; ?> />&nbsp;Traffic</td>
+						<td><input name="trafficstats" id="trafficstats" type="checkbox" <?php if($_POST['trafficstats']) echo "checked"; ?> />&nbsp;Total Bandwidth</td>
 						<td><input name="errorsdiscard" id="errorsdiscard" type="checkbox" <?php if($_POST['errorsdiscard']) echo "checked"; ?> />&nbsp;Errors and Discards</td>
 					</tr>
 					<tr>
 						<td colspan="2"><input name="ciscopps" id="ciscopps" type="checkbox" <?php if($_POST['ciscopps']) echo "checked"; ?> />&nbsp;Cisco PPS (5 min average)</td>
+					</tr>
+					<tr>
+						<td colspan="2"><input name="ciscoinoutrate" id="ciscoinoutrate" type="checkbox" <?php if($_POST['ciscoinoutrate']) echo "checked"; ?> />&nbsp;Cisco Input/Output Rate (5 min average)</td>
 					</tr>
 				</table>
 			</td>
@@ -387,6 +392,7 @@
 					document.getElementById("trafficstats").checked = false;
 					document.getElementById("errorsdiscard").checked = false;
 					document.getElementById("ciscopps").checked = false;
+					document.getElementById("ciscoinoutrate").checked = false;
 				}
 			}
 		</script>
@@ -646,8 +652,12 @@
 				SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.x	- Cisco Interface PoE ID's
 				SNMPv2-SMI::enterprises.9.9.402.1.3.1.1		- Cisco PoE Switch Numbers
 				SNMPv2-SMI::mib-2.47.1.1.1.1.7				- Cisco Interface PoE ID's (For translation to another ID table)...come on Cisco!
+				1.3.6.1.4.1.9.2.2.1.1.7						- Cisco PPS in (5 min average)
+				1.3.6.1.4.1.9.2.2.1.1.9						- Cisco PPS out (5 min average)
+				1.3.6.1.4.1.9.2.2.1.1.6						- Cisco input rate (5 minute average)
+				1.3.6.1.4.1.9.2.2.1.1.8						- Cisco output rate (5 minute average)
 				*/
-				if($snmpval && ($commandstring=="SNMPv2-SMI::transmission.7.2.1.19" || $commandstring=="SNMPv2-SMI::transmission.7.2.1.7" || $commandstring=="SNMPv2-SMI::enterprises.9.9.68.1.2.2.1.2" || strstr($commandstring,'SNMPv2-SMI::enterprises.2272.1.3.3.1') || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.13" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14" || $commandstring=="SNMPv2-SMI::mib-2.17.1.4.1.2" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.7.1.5" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2") || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.6" || $commandstring=="1.3.6.1.2.1.47.1.1.1.1.14" || strstr($commandstring,'SNMPv2-SMI::mib-2.105.1.1.1.9.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.8.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.10.') || $commandstring=="SNMPv2-SMI::enterprises.9.9.402.1.3.1.1" || $commandstring=="SNMPv2-SMI::mib-2.47.1.1.1.1.7" || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.7') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.9')){
+				if($snmpval && ($commandstring=="SNMPv2-SMI::transmission.7.2.1.19" || $commandstring=="SNMPv2-SMI::transmission.7.2.1.7" || $commandstring=="SNMPv2-SMI::enterprises.9.9.68.1.2.2.1.2" || strstr($commandstring,'SNMPv2-SMI::enterprises.2272.1.3.3.1') || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.13" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14" || $commandstring=="SNMPv2-SMI::mib-2.17.1.4.1.2" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.7.1.5" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2") || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.6" || $commandstring=="1.3.6.1.2.1.47.1.1.1.1.14" || strstr($commandstring,'SNMPv2-SMI::mib-2.105.1.1.1.9.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.8.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.10.') || $commandstring=="SNMPv2-SMI::enterprises.9.9.402.1.3.1.1" || $commandstring=="SNMPv2-SMI::mib-2.47.1.1.1.1.7" || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.7') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.9') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.6') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.8')){
 					list($remain,$val)=explode(' ',$snmpval,2);
 					//Get ID by reversing string and exploding on first instance of "."
 					list($id,$junk)=explode(".",strrev($remain));
@@ -759,6 +769,11 @@
 						if($val>0){
 							$val=number_format(round(((trim($val))/1000),2),2);
 						}
+					} else 
+						
+					//Modify speed and bandwidth values
+					if(strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.6') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.8')){
+						$val=round($val/1000000,3);
 					}
 					$finar[$id]=$val;
 				//Handle the index to MAC MIB
@@ -1947,6 +1962,16 @@
 							echo "<pre><font style=\"color: red;\">"; print_r($ciscoppsoutar); echo "</font></pre>";
 						}
 					}
+					if($_POST['ciscoinoutrate']){
+						$ciscoinratear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.9.2.2.1.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						if($_POST['debug'] && $_POST['debugoutput']){
+							echo "<pre><font style=\"color: red;\">"; print_r($ciscoinratear); echo "</font></pre>";
+						}
+						$ciscooutratear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.9.2.2.1.1.8",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						if($_POST['debug'] && $_POST['debugoutput']){
+							echo "<pre><font style=\"color: red;\">"; print_r($ciscooutratear); echo "</font></pre>";
+						}
+					}
 					if($_POST['cdpname']){
 						$cdpnamear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
 						if($_POST['debug'] && $_POST['debugoutput']){
@@ -2232,8 +2257,8 @@
 							}
 						}
 						if($_POST['trafficstats']){
-							$headerar[]="In MBytes";
-							$headerar[]="Out MBytes";
+							$headerar[]="In Bandwidth (MB)";
+							$headerar[]="Out Bandwidth (MB)";
 							$dataarstring=$dataarstring . ',$ifinoctetsar[$theid],$ifoutoctetsar[$theid]';
 						}
 						if($_POST['errorsdiscard']){
@@ -2247,6 +2272,11 @@
 							$headerar[]="PPS In";
 							$headerar[]="PPS Out";
 							$dataarstring=$dataarstring . ',$ciscoppsinar[$theid],$ciscoppsoutar[$theid]';
+						}
+						if($_POST['ciscoinoutrate']){
+							$headerar[]="In Rate (mbps)";
+							$headerar[]="Out Rate (mbps)";
+							$dataarstring=$dataarstring . ',$ciscoinratear[$theid],$ciscooutratear[$theid]';
 						}
 						if($_POST['cdpname']){
 							$headerar[]="CDP Name";
@@ -2516,6 +2546,10 @@
 								if($_POST['ciscopps']){
 									echo "<td>" . $ciscoppsinar[$theid] . "</td>";
 									echo "<td>" . $ciscoppsoutar[$theid] . "</td>";
+								}
+								if($_POST['ciscoinoutrate']){
+									echo "<td>" . $ciscoinratear[$theid] . "</td>";
+									echo "<td>" . $ciscooutratear[$theid] . "</td>";
 								}
 								if($_POST['cdpname']){
 									echo "<td>" . $cdpnamear[$theid] . "</td>";
