@@ -2268,7 +2268,7 @@
 							$dataarstring=$dataarstring . ',$ifoperstatusar[$theid]';
 						}
 						if(!$_POST['hidespeed']){
-							$headerar[]="Speed (In mbps)";
+							$headerar[]="Speed (Mbps)";
 							$dataarstring=$dataarstring . ',$ifspeedar[$theid]';
 						}
 						if(!$_POST['hideduplex']){
@@ -2377,7 +2377,18 @@
 						echo "<thead><tr>";
 						//Print out headerar for table
 						foreach($headerar as $header){
-							echo "<th>$header</th>";
+							//Adjust header widths - Makes the floating header stay on 1 line when scrolling
+							if($header=='VLAN PVID'){
+								echo "<th style=\"width: 90px;\">$header</th>";
+							} else if($header=="Admin Status"){
+								echo "<th style=\"width: 110px;\">$header</th>";
+							} else if($header=="Operational Status"){
+								echo "<th style=\"width: 150px;\">$header</th>";
+							} else if($header=="MAC Address(es) - VLAN"){
+								echo "<th style=\"width: 200px;\">$header</th>";
+							} else {
+								echo "<th>$header</th>";
+							}
 						}
 						echo "</tr></thead><tbody>\n";
 						foreach($ifdescar as $theid => $ifdesc){
@@ -2663,13 +2674,13 @@
 							//echo "<pre>"; print_r($arpar); echo "</pre>";
 							$arpheaderar[]="MAC Address";
 							$arpheaderar[]="IP Address";
-							echo "<table border=1>\n";
-							echo "<tr>";
+							echo "<table class=\"output\" id=\"floater3\">\n";
+							echo "<thead><tr>";
 							//Print out headerar for table
 							foreach($arpheaderar as $header){
 								echo "<th>$header</th>";
 							}
-							echo "</tr>\n";
+							echo "</tr></thead><tbody>\n";
 							foreach($arpar as $macadd => $ipadd){
 								if($macadd){
 									echo "<tr>";
@@ -2679,7 +2690,12 @@
 									$newarpar[]=array($macadd,$ipadd);
 								}
 							}
-							echo "</table><br />\n";
+							echo "</tbody><tfoot></tfoot></table><br />\n";
+							?>
+							<script>
+							$("#floater3").thfloat();
+							</script>
+							<?php
 							$excelar[]=array($arpheaderar,$newarpar);
 						}
 						//echo "<pre>"; print_r($excelar); echo "</pre>\n";
