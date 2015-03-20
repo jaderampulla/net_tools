@@ -328,8 +328,9 @@
 				</tr>
 				<tr>
 					<td colspan="2">&nbsp;&nbsp;&nbsp;Interface:&nbsp;
-						<select name="nmaparp" id="nmaparp"<?php if($_POST['arpchoice']=="snmp") echo " disabled"; ?>>
+						<select name="nmaparp" id="nmaparp"<?php if($_POST['arpchoice']=="snmp" || !$_POST['arpchoice']) echo " disabled"; ?>>
 							<?php
+									//Function to convert CIDR (255.255.252.0) to Netmask (/22)
 									function netmask2cidr($netmask){
 										$bits = 0;
 										$netmask = explode(".", $netmask);
@@ -344,17 +345,21 @@
 									foreach($ifconftempar as $ifconfline){
 										if(strstr($ifconfline,'Link encap')){
 											list($intname,$remain)=explode(' ',trim($ifconfline),2);
+											//Remember the interface name
 											$last="$intname";
 										} else if(strstr($ifconfline,'Bcast')){
 											$ifconfline=trim(str_replace('inet addr:','',$ifconfline));
 											$ifconfline=str_replace('Bcast:','',$ifconfline);
 											$ifconfline=str_replace('Mask:','',$ifconfline);
+											//Replace multiple white spaces with a single white space
 											$ifconfline=preg_replace('!\s+!',' ', $ifconfline);
 											list($intip,$intbcast,$intmask)=explode(' ',$ifconfline,3);
 											$intmask=netmask2cidr($intmask);
+											//Store the interface name with IP info in an array
 											$ifconfar[$last]="$intip/$intmask";
 										}
 									}
+									//Loop through each interface with IP info - Used to feed NMAP IP info
 									foreach($ifconfar as $intname=>$value){
 										echo "<option value=\"$value\""; if($_POST['nmaparp']=="$value") echo " selected"; echo ">$intname: $value</option>\n";
 									}
