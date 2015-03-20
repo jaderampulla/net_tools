@@ -2386,6 +2386,10 @@
 								echo "<th style=\"width: 150px;\">$header</th>";
 							} else if($header=="MAC Address(es) - VLAN"){
 								echo "<th style=\"width: 200px;\">$header</th>";
+							} else if($header=="In Rate (mbps)"){
+								echo "<th style=\"width: 125px;\">$header</th>";
+							} else if($header=="Out Rate (mbps)"){
+								echo "<th style=\"width: 130px;\">$header</th>";
 							} else {
 								echo "<th>$header</th>";
 							}
