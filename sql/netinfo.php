@@ -324,15 +324,65 @@
 			<td>&nbsp;&nbsp;
 			<table border=0 style="display: inline-table;">
 				<tr>
-					<td>Router IP:</td>
-					<td><input type="text" name="routerip" style="width: 150px; text-align: left;" <?php if($_POST['routerip']){ echo " value=\"{$_POST['routerip']}\""; } else { echo " value=\"$defaultrouterip\""; }?> /></td>
+					<td colspan="2"><input type="radio" name="arpchoice" id="arpchoice" value="nmap" onclick="toggleARPSourceInput()" <?php if($_POST['arpchoice']=="nmap") echo "checked"; ?> />ARP from NMAP (Local interface on this server)</td>
 				</tr>
+				<tr>
+					<td colspan="2">&nbsp;&nbsp;&nbsp;Interface:&nbsp;
+						<select name="nmaparp" id="nmaparp"<?php if($_POST['arpchoice']=="snmp") echo " disabled"; ?>>
+							<?php
+									function netmask2cidr($netmask){
+										$bits = 0;
+										$netmask = explode(".", $netmask);
+										foreach($netmask as $octect)
+										$bits += strlen(str_replace("0", "", decbin($octect)));
+										return $bits;
+									}
+									$ifconfstring="ifconfig | grep -e \"Link encap\" -e \"inet addr\"";
+									$ifconf=shell_exec($ifconfstring);
+									$ifconftempar=split("\n",$ifconf);
+									$last="";
+									foreach($ifconftempar as $ifconfline){
+										if(strstr($ifconfline,'Link encap')){
+											list($intname,$remain)=explode(' ',trim($ifconfline),2);
+											$last="$intname";
+										} else if(strstr($ifconfline,'Bcast')){
+											$ifconfline=trim(str_replace('inet addr:','',$ifconfline));
+											$ifconfline=str_replace('Bcast:','',$ifconfline);
+											$ifconfline=str_replace('Mask:','',$ifconfline);
+											$ifconfline=preg_replace('!\s+!',' ', $ifconfline);
+											list($intip,$intbcast,$intmask)=explode(' ',$ifconfline,3);
+											$intmask=netmask2cidr($intmask);
+											$ifconfar[$last]="$intip/$intmask";
+										}
+									}
+									foreach($ifconfar as $intname=>$value){
+										echo "<option value=\"$value\""; if($_POST['nmaparp']=="$value") echo " selected"; echo ">$intname: $value</option>\n";
+									}
+									echo "<pre>"; print_r($ifconfar); echo "</pre>";
+							?>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td><input type="radio" name="arpchoice" id="arpchoice" value="snmp" onclick="toggleARPSourceInput2()" <?php if($_POST['arpchoice']=="snmp" || !$_POST['arpchoice']) echo "checked"; ?> />ARP from Router:</td>
+					<td><input type="text" name="routerip" id="routerip" style="width: 150px; text-align: left;" <?php if($_POST['routerip']){ echo " value=\"{$_POST['routerip']}\""; } else { echo " value=\"$defaultrouterip\""; } if($_POST['arpchoice']=="nmap") echo " disabled"; ?> /></td>
+				</tr>
+				<script type="text/javascript">
+				function toggleARPSourceInput() {
+					document.getElementById("routerip").disabled=true;
+					document.getElementById("nmaparp").disabled=false;
+				}
+				function toggleARPSourceInput2() {
+					document.getElementById("routerip").disabled=false;
+					document.getElementById("nmaparp").disabled=true;
+				}
+				</script>
 				<tr>
 					<td>DNS Server:</td>
 					<td><input type="text" name="dnsserver" id="dnsserver" style="width: 150px; text-align: left;" <?php if($_POST['dnsserver']){ echo " value=\"{$_POST['dnsserver']}\""; } else if(!$_POST['ignoredns'] || $_POST['routerip']) { echo " value=\"$defaultdnsserver\""; }?> /></td>
 				</tr>
 				<tr>
-					<td colspan="2"><input name="showarp" id="showarp" type="checkbox" <?php if($_POST['showarp']) echo "checked"; ?> />&nbsp;Show ARP table from router</td>
+					<td colspan="2"><input name="showarp" id="showarp" type="checkbox" <?php if($_POST['showarp']) echo "checked"; ?> />&nbsp;Show ARP table</td>
 				</tr>
 				<tr>
 					<td colspan="2"><input name="ignoredns" id="ignoredns" type="checkbox" onchange="ignoredns_changer()" <?php if($_POST['ignoredns']) echo "checked"; ?> />&nbsp;Ignore DNS (Can reduce script run time)</td>
@@ -345,7 +395,7 @@
 						document.getElementById("dnsserver").removeAttribute("disabled");
 					}
 				}
-			</script>
+				</script>
 			</table>
 			</td>
 		</tr>
@@ -1073,7 +1123,7 @@
 			echo "<br />Please enter an SNMPv3 authentication password\n";
 		} else if($snmpversion==3 && !$snmpv3privpass && $snmpv3seclevel=="authPriv"){
 			echo "<br />Please enter an SNMPv3 privacy password\n";
-		} else if($_POST['clientarp'] && !$routerip) {
+		} else if($_POST['clientarp'] && $_POST['arpchoice']=="snmp" && !$routerip) {
 			echo "<br />Please enter a router IP to grab the ARP table from\n";
 		} else if($_POST['clientarp'] && !$dnsserver && !$_POST['ignoredns']){
 			echo "<br />Please enter a DNS Server IP\n";
@@ -1896,7 +1946,7 @@
 						}
 					}
 					$arpworks=false;
-					if($_POST['clientarp'] && ($ignoreping==true || strlen($testrouterip)>1)){
+					if($_POST['clientarp'] && ($ignoreping==true || strlen($testrouterip)>1) && $_POST['arpchoice']=="snmp"){
 						$testroutersnmp=StandardSNMPGet($routerip,$snmpversion,$snmpcommstring,"SNMPv2-MIB::sysName.0",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,"-O qv","showerrors");
 						//echo "TESTROUTERSNMP: $testroutersnmp<br />";
 						if(strstr($testroutersnmp,'user name')){
@@ -1921,7 +1971,31 @@
 								echo "<font style=\"color: red;\">The router was reachable through SNMP, but the ARP table is unavailable.</font><br /><br />";
 							}
 						}
-					} else if(strlen($testrouterip)<1){
+					} else if($_POST['arpchoice']=="nmap"){
+						$nmapstring="sudo nmap -PO -sP -PE -n --open {$_POST['nmaparp']} | grep -e \"scan report\" -e \"MAC Address\" | grep -v \"host down\" | sed 's/Nmap scan report for //g' | sed 's/MAC Address: //g'";
+						$nmaparptempar=shell_exec($nmapstring);
+						$nmaparptempar=split("\n",$nmaparptempar);
+						$last="";
+						foreach($nmaparptempar as $line){
+							if(strstr($line,':')){
+								list($mac,$remain)=explode(' ',$line,2);
+								if($mac!="FF:FF:FF:FF:FF:FF"){
+									$arpar[$mac]=$last;
+								}
+							} else if($line){
+								//Save the IP
+								$last=$line;
+							}
+						}
+						if($_POST['debug'] && $_POST['debugoutput']){
+							echo "<pre><font style=\"color: red;\">"; print_r($arpar); echo "</font></pre>";
+						}
+						if(sizeof($arpar)>0){
+							$arpworks=true;
+						} else {
+							echo "<font style=\"color: red;\">NMAP did not return any ARP results.</font><br /><br />";
+						}
+					} else if(strlen($testrouterip)<1 && $_POST['arpchoice']=="snmp"){
 						echo "<font style=\"color: red;\">The router was not reachable through ICMP. Trying to ignore the ping test</font><br /><br />";
 					}
 					if($_POST['trafficstats']){
