@@ -14,6 +14,31 @@
 	echo "<br />This page displays a list of ports that have 0 traffic for ifInOctets <font style=\"color: red;\"><b>AND</b></font> ifOutOctets SNMP values<br />since the last time counters were cleared or the device was rebooted.<br />\n";
 	echo "<font style=\"color: red;\"><b>NOTE:</b></font> ifInOctets and ifOutOctets SNMP values only begin counting when SNMP is enabled (Either at boot or when configured).<br /><br />"
 	?>
+	<style type='text/css'>
+		table.output {
+			border-spacing: 3px;
+		}
+		.output th {
+			color: black;
+			padding: 2px 4px;
+			text-align: left;
+			border-width: 1px;
+			border-spacing: 4px;
+			border-style: outset;
+			border-color: gray;
+			background-color: #A9A9A9;
+		}
+		.output td {
+			color: black;
+			padding: 2px 4px;
+			text-align: left;
+			border-width: 1px;
+			border-spacing: 4px;
+			border-style: outset;
+			border-color: gray;
+			background-color: #DCDCDC;
+		}
+	</style>
 	<script type="text/javascript">
 		//Check all functions to grey out any boxes
 		function checker() {
@@ -318,12 +343,18 @@
 						$headerar[]="Admin Status";
 						$headerar[]="Operational Status";
 						$dataarstring='$ifdescar[$theid],$ifnamear[$theid],$ifaliasar[$theid],$ifadminstatusar[$theid],$ifoperstatusar[$theid]';
-						echo "<table border=1>\n";
-						echo "<tr>";
+						echo "<table class=\"output\" id=\"floater\">\n";
+						echo "<thead><tr>";
 						foreach($headerar as $header){
-							echo "<th>$header</th>";
+							if($header=="Admin Status"){
+								echo "<th style=\"width: 110px;\">$header</th>";
+							} else if($header=="Operational Status"){
+								echo "<th style=\"width: 150px;\">$header</th>";
+							} else {
+								echo "<th>$header</th>";
+							}
 						}
-						echo "</tr>\n";
+						echo "</tr></thead><tbody>\n";
 						foreach($notrafficar as $theid){
 							//Array for Excel export
 							$dataar[]=array($ifdescar[$theid],$ifnamear[$theid],$ifaliasar[$theid],$ifadminstatusar[$theid],$ifoperstatusar[$theid]);
@@ -340,7 +371,12 @@
 							*/
 							eval('$dataar[] = array(' . $dataarstring . ');');
 						}
-						echo "</table><br />\n";
+						echo "</tbody><tfoot></tfoot></table><br />\n";
+						?>
+						<script>
+						$("#floater").thfloat();
+						</script>
+						<?php
 						//Add system table to Excel Array for multi-table printout format
 						$excelar[]=array($headerar,$dataar);
 						//echo "<pre>"; print_r($excelar); echo "</pre>\n";
