@@ -8,10 +8,45 @@
 	session_start();
 	$title="NMAP Scan";
 	require("../include/options/snmpincludes.php");
+	//Adjust page width depending on what's selected
+	$widthmodset=true;
+	$basewidth=1350;
+	if($_POST['snmpdevname']){
+		$basewidth+=100;
+	}
+	if($_POST['snmpsernum']){
+		$basewidth+=100;
+	}
+	$widthmod=" style=\"min-width: {$basewidth}px;\" ";
 	require("../include/header.php");
 	require ("../include/functions.php");
 	$time_start=microtime_float();
 	?>
+	<style type='text/css'>
+		table.output {
+			border-spacing: 3px;
+		}
+		.output th {
+			color: black;
+			padding: 2px 4px;
+			text-align: left;
+			border-width: 1px;
+			border-spacing: 4px;
+			border-style: outset;
+			border-color: gray;
+			background-color: #A9A9A9;
+		}
+		.output td {
+			color: black;
+			padding: 2px 4px;
+			text-align: left;
+			border-width: 1px;
+			border-spacing: 4px;
+			border-style: outset;
+			border-color: gray;
+			background-color: #DCDCDC;
+		}
+	</style>
 	<br />
 	<script type="text/javascript">
 		//Check all functions to grey out any boxes
@@ -616,13 +651,20 @@
 					$headerar[]="Serial Number Description(s)";
 					$dataarstring=$dataarstring . ',$result[5],$result[6]';
 				}
-				echo "<table border=1>\n";
-				echo "<tr>";
+				echo "<table class=\"output\" id=\"floater\">\n";
+				echo "<thead><tr>";
 				//Print out headerar for table
 				foreach($headerar as $header){
-					echo "<th>$header</th>";
+					//Adjust header widths - Makes the floating header stay on 1 line when scrolling
+					if($header=='SNMP Device Name'){
+						echo "<th style=\"min-width: 160px;\">$header</th>";
+					} else if($header=='Serial Number(s)'){
+						echo "<th style=\"min-width: 150px;\">$header</th>";
+					} else {
+						echo "<th>$header</th>";
+					}
 				}
-				echo "</tr>\n";
+				echo "</tr></thead><tbody>\n";
 				//echo "<pre>"; print_r($returnar); echo "</pre>";
 				foreach($returnar as $ip=>$result){
 					if($result[1]=="down"){
@@ -662,7 +704,12 @@
 					echo "</tr>\n";
 					eval('$dataar[] = array(' . $dataarstring . ');');
 				}
-				echo "</table><br />\n";
+				echo "</tbody><tfoot></tfoot></table><br />\n";
+				?>
+				<script>
+				$("#floater").thfloat();
+				</script>
+				<?php
 				//Add system table to Excel Array for multi-table printout format
 				$excelar[]=array($headerar,$dataar);
 				//echo "<pre>"; print_r($excelar); echo "</pre>\n";
