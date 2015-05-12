@@ -2384,8 +2384,12 @@
 								echo "<th style=\"width: 110px;\">$header</th>";
 							} else if($header=="Operational Status"){
 								echo "<th style=\"width: 150px;\">$header</th>";
+							} else if($header=="Operational Mode"){
+								echo "<th style=\"width: 150px;\">$header</th>";
 							} else if($header=="MAC Address(es) - VLAN"){
 								echo "<th style=\"width: 200px;\">$header</th>";
+							} else if($header=="IP Address(es)"){
+								echo "<th style=\"width: 130px;\">$header</th>";
 							} else if($header=="In Rate (mbps)"){
 								echo "<th style=\"width: 125px;\">$header</th>";
 							} else if($header=="Out Rate (mbps)"){
