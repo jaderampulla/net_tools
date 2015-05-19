@@ -270,6 +270,8 @@ if($_POST['scan']){
 					if($netbiosname){ echo "<td>$netbiosname</td>"; } else { echo "&nbsp;"; }
 					if($netbiosworkgroup){ echo "<td>$netbiosworkgroup</td>"; } else { echo "&nbsp;"; }
 					if($netbiosmac){ echo "<td style=\"text-align: left;\">$netbiosmac</td>"; } else { echo "&nbsp;"; }
+				} else if($netbiosextra){
+					echo "<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>";
 				}
 				if($snmp=="on" && in_array(161,$ar)){ echo "<td>{$fontgreenbegin}X{$fontend}</td>"; } else if($snmp=="on") { echo "<td>{$fontredbegin}X{$fontend}</td>"; }
 				if($https=="on" && in_array(443,$ar)){ echo "<td>{$fontgreenbegin}X{$fontend}</td>"; } else if($https=="on") { echo "<td>{$fontredbegin}X{$fontend}</td>"; }
