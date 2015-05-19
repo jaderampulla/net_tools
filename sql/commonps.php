@@ -211,7 +211,7 @@ if($_POST['scan']){
 			echo "</pre>";*/
 			
 			//Sort the array by IP address (Key of $finar)
-			ksort($finar,SORT_STRING);
+			ksort($finar,SORT_NATURAL);
 			$fontredbegin="<font style=\"color: red;\">";
 			$fontgreenbegin="<font style=\"font-weight:bold; color: green;\">";
 			$fontend="</font>";
@@ -267,9 +267,9 @@ if($_POST['scan']){
 							//echo "$netbiosentry<br />\n";
 						}
 					}
-					if($netbiosname){ echo "<td>$netbiosname</td>"; } else { echo "&nbsp;"; }
-					if($netbiosworkgroup){ echo "<td>$netbiosworkgroup</td>"; } else { echo "&nbsp;"; }
-					if($netbiosmac){ echo "<td style=\"text-align: left;\">$netbiosmac</td>"; } else { echo "&nbsp;"; }
+					if($netbiosname){ echo "<td>$netbiosname</td>"; } else { echo "<td>&nbsp;</td>"; }
+					if($netbiosworkgroup){ echo "<td>$netbiosworkgroup</td>"; } else { echo "<td>&nbsp;</td>"; }
+					if($netbiosmac){ echo "<td style=\"text-align: left;\">$netbiosmac</td>"; } else { echo "<td>&nbsp;</td>"; }
 				} else if($netbiosextra){
 					echo "<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>";
 				}
