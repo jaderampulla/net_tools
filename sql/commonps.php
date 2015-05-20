@@ -27,6 +27,29 @@ table.scanout td {
 	border-style: inset;
 	border-color: black;
 }
+table.output {
+	border-spacing: 3px;
+}
+.output th {
+	color: black;
+	padding: 2px 4px;
+	text-align: left;
+	border-width: 1px;
+	border-spacing: 4px;
+	border-style: outset;
+	border-color: gray;
+	background-color: #A9A9A9;
+}
+.output td {
+	color: black;
+	padding: 2px 4px;
+	text-align: left;
+	border-width: 1px;
+	border-spacing: 4px;
+	border-style: outset;
+	border-color: gray;
+	background-color: #DCDCDC;
+}
 </style>
 <br />(More info about ports <a target="_NEW" href="http://en.wikipedia.org/wiki/TCP_and_UDP_port_numbers">here</a>)<br /><br />
 <form method="post" style="display: inline;" name="inputstuff">
@@ -135,8 +158,8 @@ if($_POST['scan']){
 		//Check to make sure there are results
 		if(sizeof($resultsar)>0 && $resultsar[0]){
 			//Create output table
-			echo "<br /><table class=\"scanout\"border=1>\n";
-			echo "<tr>";
+			echo "<br /><table class=\"output\" id=\"floater\">\n";
+			echo "<thead><tr>";
 			echo "<th>IP Address</th>";
 			if($ftpdata=="on"){	echo "<th>FTP Data</th>"; }
 			if($ftpcontrol=="on"){ echo "<th>FTP Control</th>";	}
@@ -147,7 +170,7 @@ if($_POST['scan']){
 			if($dns=="on"){ echo "<th>DNS</th>"; }
 			if($http=="on"){ echo "<th>HTTP</th>"; }
 			if($netbios=="on"){ echo "<th>NetBIOS</th>"; }
-			if($netbiosextra=="on"){ echo "<th>NetBIOS Name</th><th>NetBIOS Workgroup</th><th>NetBIOS MAC Address</th>"; }
+			if($netbiosextra=="on"){ echo "<th style=\"width: 150px;\">NetBIOS Name</th><th style=\"width: 180px;\">NetBIOS Workgroup</th><th>NetBIOS MAC Address</th>"; }
 			if($netbiosextra){
 				//Get OUI file into array
 				$macouifilear=file("oui.txt");
@@ -192,7 +215,7 @@ if($_POST['scan']){
 				}
 				//print_r($moreportsar);
 			}
-			echo "</tr>\n";
+			echo "</tr></thead><tbody>\n";
 			foreach($resultsar as $result){
 				if($result){
 					//Get info out of nmap line into $ip, $port, and $proto variables
@@ -211,7 +234,7 @@ if($_POST['scan']){
 			echo "</pre>";*/
 			
 			//Sort the array by IP address (Key of $finar)
-			ksort($finar,SORT_NATURAL);
+			ksort($finar,SORT_STRING);
 			$fontredbegin="<font style=\"color: red;\">";
 			$fontgreenbegin="<font style=\"font-weight:bold; color: green;\">";
 			$fontend="</font>";
@@ -301,7 +324,12 @@ if($_POST['scan']){
 				}
 				echo "</tr>\n";
 			}
-			echo "</table>\n";
+			echo "</tbody></table>\n";
+			?>
+			<script>
+			$("#floater").thfloat();
+			</script>
+			<?php
 			$time=end_time($time_start);
 			echo "\n<br />Port scan completed in {$time}seconds.<br />";
 		} else {

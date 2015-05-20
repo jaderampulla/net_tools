@@ -57,7 +57,7 @@
 		echo "</script>\n";
 		
 	}
-	if($title=="Router/Switch Info" || $title=="NMAP Scan" || $title=="Unused Switch Ports"){
+	if($title=="Router/Switch Info" || $title=="NMAP Scan" || $title=="Unused Switch Ports" || $title=="Common Port Scan"){
 		echo "<script type=\"text/javascript\" src=\"/include/js/jquery-1.5.1.min.js\"></script>\n";
 		echo "\t<script type=\"text/javascript\" src=\"/include/js/jquery.thfloat-0.7.2.js\"></script>\n";
 	}
