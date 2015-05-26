@@ -78,6 +78,7 @@ nav ul ul {
 		position: relative;
 	}
 		nav ul ul li a {
+			min-width: 180px;
 			padding: 15px 40px;
 			color: #fff;
 		}	
