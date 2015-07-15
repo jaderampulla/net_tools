@@ -14,7 +14,7 @@
 		echo "<script type=\"text/javascript\" src=\"../logtail.js\"></script>\n";
 	}
 	//Codemirror
-	if($title=="SQL Syslog Query"){
+	if($title=="SQL Syslog Query" || $title=="PostgreSQL Query"){
 		
 		echo "<link rel=\"stylesheet\" href=\"../include/codemirror/codemirror.css\" />\n";
 		echo "<script src=\"../include/codemirror/codemirror.js\"></script>\n";
