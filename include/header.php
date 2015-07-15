@@ -68,7 +68,7 @@
 if(!$widthmodset){
 	$widthmod="";
 }
-if($title=="SQL Syslog Query"){
+if($title=="SQL Syslog Query" || $title=="PostgreSQL Query"){
 	echo "<body {$widthmod}onload=\"init();\">\n";
 } else {
 	echo "<body{$widthmod}>\n";
