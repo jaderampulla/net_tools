@@ -131,11 +131,11 @@ $apachebasepath="/etc/apache2";
 		if(file_exists("$basepath/sql/netinfo.php") || file_exists("$basepath/sql/nmapscan.php") || file_exists("$basepath/sql/commonps.php") || file_exists("$basepath/sql/unusedports.php") || file_exists("$apachebasepath/conf.d/cacti.conf") || $netflowstatus==true){
 			echo "</ul></li>\n";
 		}
+		include("options/extra_links_after.php");
 		//Syslog Stats Menu
 		if(file_exists("$basepath/syslogstats.php")){
-			echo "<li><a href=\"https://" . $_SERVER['SERVER_NAME'] . "/syslogstats.php\">Server Stats</a></li>\n";
+			echo "<li><a href=\"https://" . $_SERVER['SERVER_NAME'] . "/syslogstats.php\">Syslog DB Stats</a></li>\n";
 		}
-		include("options/extra_links_after.php");
 		?>
 	</ul>
 </nav>
