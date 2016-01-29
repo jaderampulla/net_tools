@@ -16,7 +16,7 @@
 	$thesql=str_replace($sqt,$qt,$thesql);
 	
 	echo "\n<br />";
-	echo "<form style='display: inline;' action=\"sql.php\" method=post>";
+	echo "<form style='display: inline;' action=\"" . htmlspecialchars($_SERVER["PHP_SELF"]) . "\" method=post>";
 	echo "Connect to another server:\n";
 	echo "<input type='text' style='text-align: center; width: 12em;' name='otherdb' id='otherdb' value='";
 	if($_POST['otherdb'] && !($_POST['otherdbconnkill'])){
@@ -58,21 +58,21 @@
 	$db=mysql_connect($DBHost,$UserName,$Password) or die("<br /><b>Could not connect because of bad username, password, and or service not available</b>");
 	//Default selected database
 	$dbase=$_REQUEST[Database]; if(!$dbase) $dbase="syslog";
-	echo "<form style='display: inline;' action=\"sql.php\" name=mymain method=post>";
+	echo "<form style='display: inline;' action=\"" . htmlspecialchars($_SERVER["PHP_SELF"]) . "\" name=mymain method=post>";
 	echo "Database: ";
 	echo dropdown($db,"show databases","Database","Database",$dbase);
 	echo " <input type=submit value=Execute>";
 	echo "&nbsp;&nbsp;<a target='_BLANK' href='sql.php'>New SQL Tab</a>\n";
 	
 	echo "&nbsp;&nbsp;Example SQL:&nbsp;<select name='thesqlexample'>";
-	if($dbase=="syslog"){
+	//if($dbase=="syslog"){
 		echo "<option value=''></option>\n";
 		include("../include/options/sql_queries.php");
 		foreach($queriesarray as $name=>$query){
 			echo "<option value=\"$query\">$name</option>\n";
 		}
 		echo "</select>\n";
-	}
+	//}
 	if($_POST['thesqlexample']) $thesql=$_POST['thesqlexample'];
 	
 	echo "<br />";
