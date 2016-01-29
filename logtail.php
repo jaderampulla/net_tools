@@ -4,8 +4,10 @@ require("include/functions.php");
 session_start();
 $mysql=new mysql;
 $returnar=$mysql->connect(1);
-$thedb=$returnar[0];
+//$thedb=$returnar[0];
+//$thedb="JadeHomeLab";
 $dbconn=$returnar[1];
+$thedb=mysql_real_escape_string($_SESSION['thedatabase']);
 $logstable=mysql_real_escape_string($_SESSION['thetables']);
 $numevents=mysql_real_escape_string($_SESSION['numevents']);
 $hostfilter=mysql_real_escape_string($_SESSION['hostfilter']);
@@ -93,7 +95,7 @@ if($program){
 }
 //Set a default table
 if($logstable=="") $logstable="defaultlogs";
-$getlogs="SELECT timestamp,facility,level,host,program,msg FROM $logstable $hostfilter $levelfilter $programfilter ORDER BY seq DESC LIMIT $numevents;";
+$getlogs="SELECT timestamp,facility,level,host,program,msg FROM $thedb.$logstable $hostfilter $levelfilter $programfilter ORDER BY seq DESC LIMIT $numevents;";
 if($showsql){
 	echo "<b>SQL:</b> $getlogs<br />\n";
 }

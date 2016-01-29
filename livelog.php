@@ -5,10 +5,15 @@ require("include/mysql.php");
 require("include/functions.php");
 session_start();
 //Session variables to use in logtail.php
+if($_REQUEST['thedatabase']){
+	$_SESSION['thedatabase']=$_REQUEST['thedatabase'];
+} else {
+	$_SESSION['thedatabase']="syslog";
+}
 if($_REQUEST['thetables']){
 	$_SESSION['thetables']=$_REQUEST['thetables'];
 } else {
-	$_SESSION['thetables']="logs";
+	$_SESSION['thetables']="defaultlogs";
 }
 if($_REQUEST['numevents']){
 	$_SESSION['numevents']=$_REQUEST['numevents'];
@@ -48,21 +53,50 @@ echo "<br /><h3 style='display: inline;'>$title</h3> (<font style=\"text-align: 
 <b>Filtering options</b> (Submit required options in <font style="color: #8B0000;">red</font> then "Start Log")<br />
 <div style="min-width: 750px;">
 	<form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" style="display: inline;">
-		<table style="border-style: solid; border-width: 1px; border-spacing: 10px;">
+		<table style="border-style: none; display: inline;">
 			<tr>
-				<td style="text-align: right; color: #8B0000;"><b>Log Source</b></td>
-				<td>
+				<td>Database:
+				<select name="thedatabase">
 				<?php
 				$mysql=new mysql;
 				$returnar=$mysql->connect(1);
 				$thedb=$returnar[0];
 				$dbconn=$returnar[1];
+				$getdb="show databases;";
+				$getdb=mysql_query($getdb);
+				while($row=mysql_fetch_array($getdb)){
+					if($row[0]!="information_schema" && $row[0]!="cacti" && $row[0]!="mysql" && $row[0]!="performance_schema"){
+						if($row[0]==$_REQUEST['thedatabase']){
+							echo "\n<option value=\"{$row[0]}\" selected>{$row[0]}</option>";
+							$thedb=$row[0];
+						//If page loading for first time
+						} else if($row[0]==$thedb){
+							echo "\n<option value=\"{$row[0]}\" selected>{$row[0]}</option>";
+						//Catch anything else
+						} else {
+							echo "\n<option value=\"{$row[0]}\">{$row[0]}</option>";
+						}
+					}
+				}
+				?>
+				</select>
+				</td>
+				<td><input type="submit" value="Change Database" name="ChangeDatabase" /></td>
+			</tr>
+		</table>
+	</form>
+	<form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" style="display: inline;">
+		<table style="border-style: solid; border-width: 1px; border-spacing: 10px;">
+			<tr>
+				<td style="text-align: right; color: #8B0000;"><b>Log Source</b></td>
+				<td>
+				<?php
 				$gettables="show tables in $thedb;";
 				$gettables=mysql_query($gettables);
 				echo "<select name=\"thetables\">\n";
 				while($row=mysql_fetch_array($gettables)){
 					$thetable=$row[0];
-					if($thetable=="logs"){
+					if($thetable=="logs" || $thetable=="defaultlogs"){
 						$thetable="Default Logs";
 					}
 					if($row[0]==$_REQUEST['thetables']){
@@ -135,7 +169,10 @@ echo "<br /><h3 style='display: inline;'>$title</h3> (<font style=\"text-align: 
 				</td>
 			</tr>
 			<tr>
-				<td><input type="submit" value="Submit Filter" name="submitfilter" /></td>
+				<td><?php echo $_REQUEST['thedatabase']; ?>
+					<input type=hidden name=thedatabase value="<?php echo $_REQUEST['thedatabase']; ?>">
+					<input type="submit" value="Submit Filter" name="submitfilter" />
+				</td>
 				<td>&nbsp;</td>
 			</tr>
 		</table>
