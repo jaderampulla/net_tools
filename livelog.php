@@ -169,7 +169,7 @@ echo "<br /><h3 style='display: inline;'>$title</h3> (<font style=\"text-align: 
 				</td>
 			</tr>
 			<tr>
-				<td><?php echo $_REQUEST['thedatabase']; ?>
+				<td>
 					<input type=hidden name=thedatabase value="<?php echo $_REQUEST['thedatabase']; ?>">
 					<input type="submit" value="Submit Filter" name="submitfilter" />
 				</td>
