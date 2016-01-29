@@ -65,9 +65,11 @@ function dropdown($dbconn,$thesql,$varname,$txtname,$selected) {
     $dropbox="<select name=\"$varname\">\n";
     for($x=0;$x<$found;$x++) {
         $row = mysql_fetch_array ($rs_query, MYSQL_BOTH);
-        $dropbox=$dropbox."<option value=\"".$row[$varname]."\"";
-        if($row[$varname]==$selected) $dropbox=$dropbox." selected";
-        $dropbox=$dropbox.">".$row[$txtname]."\n";
+		if($row[$varname]!="information_schema" && $row[$varname]!="cacti" && $row[$varname]!="mysql" && $row[$varname]!="performance_schema"){
+			$dropbox=$dropbox."<option value=\"".$row[$varname]."\"";
+			if($row[$varname]==$selected) $dropbox=$dropbox." selected";
+			$dropbox=$dropbox.">".$row[$txtname]."\n";
+		}
     }
     $dropbox=$dropbox."</select>\n";
     return $dropbox;
