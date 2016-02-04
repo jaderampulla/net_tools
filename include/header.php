@@ -128,7 +128,7 @@ $apachebasepath="/etc/apache2";
 		}
 		include("options/extra_links_tools.php");
 		//Close Tools Menu
-		if(file_exists("$basepath/sql/netinfo.php") || file_exists("$basepath/sql/nmapscan.php") || file_exists("$basepath/sql/commonps.php") || file_exists("$basepath/sql/unusedports.php") || file_exists("$apachebasepath/conf.d/cacti.conf") || $netflowstatus==true){
+		if(file_exists("$basepath/sql/netinfo.php") || file_exists("$basepath/sql/nmapscan.php") || file_exists("$basepath/sql/commonps.php") || file_exists("$basepath/sql/unusedports.php") || file_exists("$apachebasepath/conf.d/cacti.conf") || file_exists("$apachebasepath/conf-enabled/cacti.conf") || $netflowstatus==true){
 			echo "</ul></li>\n";
 		}
 		include("options/extra_links_after.php");
