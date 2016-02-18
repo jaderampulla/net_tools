@@ -11,6 +11,19 @@ $time_start=microtime_float();
 $debugtime=false;
 $showsql=false;
 ?>
+<style type='text/css'>
+#linkStyle {
+	background:none!important;
+	border:none; 
+	padding:0!important;
+	font: inherit;
+	font-size: .8em;
+	color: blue;
+	/*border is optional*/
+	border-bottom:1px solid #444; 
+	cursor: pointer;
+}
+</style>
 <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" style="display: inline;">
 <br /><input name="debugtime" type="checkbox" <?php if($_POST['debugtime']) echo "checked"; ?> />&nbsp;<font style="color: purple;">Debug SQL time</font>
 <input name="showsql" type="checkbox" <?php if($_POST['showsql']) echo "checked"; ?> />&nbsp;<font style="color: red;">Show SQL</font>
@@ -97,7 +110,15 @@ if($_REQUEST['StatsDB']){
 		if($numtables>0){
 			$tblcnt+=1;
 			$totaltbl+=1;
-			echo "<h4>$logstable Table </h4>\n";
+			echo "<br /><h4 style=\"display: inline;\">$logstable Table</h4>\n";
+			//Build button for viewing logging hosts
+			echo "<form action=\"sql/sql.php\" method=\"post\" target=\"_blank\" style=\"display: inline;\">\n";
+			echo "<input type=\"hidden\" name=\"Database\" value=\"$thedb\" />\n";
+			echo "<input type=\"hidden\" name=\"thesql\" value=\"SELECT DISTINCT(host) FROM $logstable ORDER BY host ASC;\" />\n";
+			echo "(<input type=\"submit\" id=\"linkStyle\" value=\"See Logging Hosts\" />)\n";
+			//echo "<input type=\"hidden\" name=\"\" value=\"\" />\n";
+			echo "</form>\n";
+			echo "<br /><br />\n";
 			echo "<table border=1>\n";
 			echo "<tr><th>Stat Type</th><th>Value</th></tr>\n";
 			echo "<tr>";
@@ -242,7 +263,17 @@ if($_REQUEST['StatsDB']){
 		foreach($watchlistar as $ar){
 			echo "<h4>{$ar['Description']}</h4>\n";
 			echo "<table border=1>\n";
-			echo "<tr><th>Name</th><th>IP</th><th>Messages Last Hour</th><th>Status</th></tr>";
+			/*
+			Add an "s" to the time amount if there's more than 1
+			Example: 10 minutes, 3 months
+			versus: 1 minute, 1 month
+			*/
+			$timestringextra="";
+			list($timetest,$junk)=explode(' ',$ar['amounttime']);
+			if($timetest>1){
+				$timestringextra="s";
+			}
+			echo "<tr><th>Name</th><th>IP</th><th>Messages Last " . strtolower($ar['amounttime']) . $timestringextra . "</th><th>Status</th></tr>";
 			$sqlstring="SELECT";
 			//Loop through all values for a watchlist
 			foreach($ar as $elem=>$val){
