@@ -1930,22 +1930,38 @@
 						}
 					}
 					if($_POST['macoui']){
-						//Get OUI file into array
-						$macouifilear=file("oui.txt");
-						//Get lines in array that have the MAC address and associated vendor
-						foreach($macouifilear as $macouiline){
-							if(strstr($macouiline,'hex')){
-								$macouitmpar[]=$macouiline;
+						//Get OUI file into array. Prefer CSV file
+						if(file("oui.csv")){
+							$macouifilear=file("oui.csv");
+							//Get lines in array that have the MAC address and associated vendor
+							foreach($macouifilear as $macouiline){
+								list($macregistry,$macoui,$macorg)=explode(',',$macouiline);
+								if($macregistry!="Registry"){
+									//Lazy coding to use existing function fixmac and convert E043DB to E0:43:DB
+									$macoui=preg_replace('/:00:00:00/','',fixmac(trim($macoui)."000000"));
+									$macorg=trim(preg_replace('/"/','',$macorg));
+									$macouiar[$macoui]=$macorg;
+								}
+							}
+							//echo "<pre>"; print_r($macouiar); echo "</pre>";
+						} else if(file("oui.txt")){
+							$macouifilear=file("oui.txt");
+							//Get lines in array that have the MAC address and associated vendor
+							foreach($macouifilear as $macouiline){
+								if(strstr($macouiline,'hex')){
+									$macouitmpar[]=$macouiline;
+								}
+							}
+							//Create array keyed by MAC address with the value of the vendor
+							foreach($macouitmpar as $macouiline){
+								list($macadd,$remain)=explode('(',$macouiline);
+								$macadd=preg_replace('/-/',':',strtoupper(trim($macadd)));
+								list($junk,$vendor)=explode(')',$remain);
+								$vendor=trim($vendor);
+								$macouiar[$macadd]=$vendor;
 							}
 						}
-						//Create array keyed by MAC address with the value of the vendor
-						foreach($macouitmpar as $macouiline){
-							list($macadd,$remain)=explode('(',$macouiline);
-							$macadd=preg_replace('/-/',':',strtoupper(trim($macadd)));
-							list($junk,$vendor)=explode(')',$remain);
-							$vendor=trim($vendor);
-							$macouiar[$macadd]=$vendor;
-						}
+						//echo "<pre>"; print_r($macouiar); echo "</pre>";
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($macouiar); echo "</font></pre>";
 						}
