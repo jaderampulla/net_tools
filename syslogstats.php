@@ -170,8 +170,21 @@ if($_REQUEST['StatsDB']){
 			$minutesum=$minutesum+$getminute;
 			$secondsum=$secondsum+$getsecond;
 		}
+		/*
+		Adjust how many stat tables are shown in a row
+		1-4 tables: 2 per row
+		5-6 tables: 3 per row
+		7 or more:  4 per row
+		*/
+		if($numtables<5){
+			$tblcntchk=2;
+		} else if($numtables<7){
+			$tblcntchk=3;
+		} else {
+			$tblcntchk=4;
+		}
 		//Start new row (Outer table) and allow 4 tables per row
-		if($tblcnt==4 && $totaltbl<$numtables){
+		if($tblcnt==$tblcntchk && $totaltbl<$numtables){
 			$tblcnt=0;
 			echo "</td></tr><tr><td style=\"padding-right: 10px;\">";
 		//Start new td in row
