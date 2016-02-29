@@ -54,6 +54,18 @@
 	if($_POST['cdpint']){
 		$basewidth+=180;
 	}
+	if($_POST['lldpname']){
+		$basewidth+=300;
+	}
+	if($_POST['lldpip']){
+		$basewidth+=100;
+	}
+	if($_POST['lldpdev']){
+		$basewidth+=230;
+	}
+	if($_POST['lldpint']){
+		$basewidth+=180;
+	}
 	$widthmod=" style=\"min-width: {$basewidth}px;\" ";
 	require("../include/header.php");
 	require ("../include/functions.php");
@@ -143,11 +155,11 @@
 			<td><input type="text" name="theip" style="width: 150px; text-align: left;" <?php if($_POST['theip']) echo " value=\"{$_POST['theip']}\"";?> /></td>
 		</tr>
 		<tr>
-			<td>SNMP Version:</td>
+			<td>SNMP Version: <?php echo $_POST['snmpversion']; ?></td>
 			<td>
 				<select name="snmpversion" id="snmpversion" onchange="disable_enable_commstring()">
-					<option value="2c"<?php if($_POST['snmpversion']=="2c" || $defaultsnmpversion=="2c") echo " selected";?>>2c</option>
-						<option value="3"<?php if($_POST['snmpversion']=="3" || $defaultsnmpversion=="3") echo " selected";?>>3</option>
+					<option value="2c"<?php if($_POST['snmpversion']=="2c" || (!$_POST['snmpversion'] && $defaultsnmpversion=="2c")) echo " selected";?>>2c</option>
+						<option value="3"<?php if($_POST['snmpversion']=="3" || (!$_POST['snmpversion'] && $defaultsnmpversion=="3")) echo " selected";?>>3</option>
 				</select>
 			</td>
 		</tr>
@@ -497,6 +509,10 @@
 						<td><input name="hidevlanint" id="hidevlanint" type="checkbox" <?php if($_POST['hidevlanint']) echo "checked"; ?> />&nbsp;VLAN Interfaces</td>
 					</tr>
 					<tr>
+						<td><input name="hidevr" id="hidevr" type="checkbox" <?php if($_POST['hidevr']) echo "checked"; ?> />&nbsp;Virtual Router</td>
+						<td colspan="2"><input name="hidemgt" id="hidemgt" type="checkbox" <?php if($_POST['hidemgt']) echo "checked"; ?> />&nbsp;Management Ports</td>
+					</tr>
+					<tr>
 						<td colspan="3"><input name="hideintid" id="hideintid" type="checkbox" <?php if($_POST['hideintid']) echo "checked"; ?> />&nbsp;SNMP Interface ID's (CSV's):&nbsp;&nbsp;<input type="text" name="hideintidval" id="hideintidval" style="width: 100px; text-align: left;" <?php if($_POST['hideintid'] && $_POST['hideintidval']) echo " value=\"{$_POST['hideintidval']}\""; ?> /></td>
 					</tr>
 					<tr>
@@ -516,6 +532,9 @@
 					document.getElementById("hidecolumnsextraextra").style.display="none";
 					document.getElementById("hidenull").checked = false;
 					document.getElementById("hidestackports").checked = false;
+					document.getElementById("hidevlanint").checked = false;
+					document.getElementById("hidevr").checked = false;
+					document.getElementById("hidemgt").checked = false;
 					document.getElementById("hidemacciscotrunk").checked = false;
 					document.getElementById("hidemacintid").checked = false;
 					document.getElementById("hidemacintidval").value = null;
@@ -568,6 +587,14 @@
 						<td><input name="cdpint" id="cdpint" type="checkbox" <?php if($_POST['cdpint']) echo "checked"; ?> />&nbsp;CDP Remote Interface</td>
 					</tr>
 					<tr>
+						<td><input name="lldpname" id="lldpname" type="checkbox" <?php if($_POST['lldpname']) echo "checked"; ?> />&nbsp;LLDP Name</td>
+						<td><input name="lldpip" id="lldpip" type="checkbox" <?php if($_POST['lldpip']) echo "checked"; ?> />&nbsp;LLDP IP (Limited support)</td>
+					</tr>
+					<tr>
+						<td><input name="lldpdev" id="lldpdev" type="checkbox" <?php if($_POST['lldpdev']) echo "checked"; ?> />&nbsp;LLDP Device</td>
+						<td><input name="lldpint" id="lldpint" type="checkbox" <?php if($_POST['lldpint']) echo "checked"; ?> />&nbsp;LLDP Remote Interface</td>
+					</tr>
+					<tr>
 						<td colspan="3"><input name="exportfileformatrow" id="exportfileformatrow" type="checkbox" onclick="toggleFileFormats()" <?php if($_POST['exportfileformatrow']) echo "checked"; ?> />&nbsp;Adjust export file format</td>
 					</tr>
 					<tr name="exportfileformatrowextra" id="exportfileformatrowextra" <?php if($_POST['exportfileformatrow']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
@@ -601,6 +628,10 @@
 					document.getElementById("cdpip").checked = false;
 					document.getElementById("cdpdev").checked = false;
 					document.getElementById("cdpint").checked = false;
+					document.getElementById("lldpname").checked = false;
+					document.getElementById("lldpip").checked = false;
+					document.getElementById("lldpdev").checked = false;
+					document.getElementById("lldpint").checked = false;
 					document.getElementById("exportfileformatrow").checked = false;
 				}
 			}
@@ -1068,6 +1099,27 @@
 					$id=trim(preg_replace('/enterprises.9.9.23.1.2.1.1.4./','',$id));
 					list($id,$remain)=explode('.',$id);
 					$finar[$id]=$val;
+				//Handle LLDP IP
+				} else if($snmpval && ($commandstring=="1.0.8802.1.1.2.1.4.1.1.10" || $commandstring=="1.0.8802.1.1.2.1.4.1.1.9" || $commandstring=="1.0.8802.1.1.2.1.4.1.1.8" || $commandstring=="1.0.8802.1.1.2.1.4.1.1.5")){
+					list($id,$val)=explode(' "',$snmpval,2);
+					$val=trim(preg_replace('/"/','',$val));
+					list($junk,$id)=explode('.',strrev($id));
+					list($id,$junk)=explode('.',$id);
+					$id=strrev($id);
+					//Get rid of domain names if there are any
+					if($commandstring=="1.0.8802.1.1.2.1.4.1.1.9" && strstr($val,'.')){
+						list($val,$junk)=explode('.',$val);
+					}
+					//Convert hex value to IP's if not in MAC address format (17 characters)
+					if($commandstring=="1.0.8802.1.1.2.1.4.1.1.5" && strlen($val)<17){
+						$val=strrev($val);
+						list($d,$c,$b,$a)=explode(' ',$val);
+						$val=hexdec(strrev($a)).".".hexdec(strrev($b)).".".hexdec(strrev($c)).".".hexdec(strrev($d));
+					//Format "00 11 22 33 44 55"
+					} else if($commandstring=="1.0.8802.1.1.2.1.4.1.1.5" && strlen($val)==17){
+						$val=preg_replace('/ /',':',$val);
+					}
+					$finar[$id]=$val;
 				//Handle everything else
 				} else {
 					//Get rid of ifDescr, ifName, ifAlias, etc
@@ -1234,6 +1286,28 @@
 							} else {
 								//Used to keep track of SNMP ID's for L3 VLAN interfaces
 								$vlanifdesc[$id]=preg_replace('/Vlan/','',$desc);
+							}
+						}
+					}
+					//Hide Virtual Router Ports
+					if($_POST['hidevr']){
+						unset($ifdescartemptemp);
+						$ifdescartemptemp=$ifdescartemp;
+						unset($ifdescartemp);
+						foreach($ifdescartemptemp as $id=>$desc){
+							if(!stristr($desc,'VirtualRouter')){
+								$ifdescartemp[$id]=$desc;
+							}
+						}
+					}
+					//Hide Management Ports
+					if($_POST['hidemgt']){
+						unset($ifdescartemptemp);
+						$ifdescartemptemp=$ifdescartemp;
+						unset($ifdescartemp);
+						foreach($ifdescartemptemp as $id=>$desc){
+							if(!stristr($desc,'Management')){
+								$ifdescartemp[$id]=$desc;
 							}
 						}
 					}
@@ -2091,6 +2165,55 @@
 							echo "<pre><font style=\"color: red;\">"; print_r($cdpintar); echo "</font></pre>";
 						}
 					}
+					
+					function LLDPIDChecker($inar,$ifdescar){
+						$lldpidcount=0;
+						//Check if LLDP ID's exist in interface ID's
+						foreach($inar as $lldpid=>$lldpname){
+							//echo "ID: $lldpid, NAME: $lldpname<br />\n";
+							if(array_key_exists($lldpid,$ifdescar)){
+								$lldpidcount+=1;
+							}
+						}
+						//echo "LLDPIDCOUNT: $lldpidcount<br />\n";
+						//Try adding 1000 to ID values...for Extreme switches
+						if($lldpidcount==0){
+							$inartemp=$inar;
+							unset($inar);
+							foreach($inartemp as $lldpid=>$lldpname){
+								$inar[$lldpid+1000]=$lldpname;
+							}
+						}
+						return $inar;
+					}
+					if($_POST['lldpname']){
+						$lldpnamear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.0.8802.1.1.2.1.4.1.1.9",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$lldpnamear=LLDPIDChecker($lldpnamear,$ifdescar);
+						if($_POST['debug'] && $_POST['debugoutput']){
+							echo "<pre><font style=\"color: red;\">"; print_r($lldpnamear); echo "</font></pre>";
+						}
+					}
+					if($_POST['lldpip']){
+						$lldpipar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.0.8802.1.1.2.1.4.1.1.5",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$lldpipar=LLDPIDChecker($lldpipar,$ifdescar);
+						if($_POST['debug'] && $_POST['debugoutput']){
+							echo "<pre><font style=\"color: red;\">"; print_r($lldpipar); echo "</font></pre>";
+						}
+					}
+					if($_POST['lldpdev']){
+						$lldpdevar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.0.8802.1.1.2.1.4.1.1.10",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$lldpdevar=LLDPIDChecker($lldpdevar,$ifdescar);
+						if($_POST['debug'] && $_POST['debugoutput']){
+							echo "<pre><font style=\"color: red;\">"; print_r($lldpdevar); echo "</font></pre>";
+						}
+					}
+					if($_POST['lldpint']){
+						$lldpintar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.0.8802.1.1.2.1.4.1.1.8",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$lldpintar=LLDPIDChecker($lldpintar,$ifdescar);
+						if($_POST['debug'] && $_POST['debugoutput']){
+							echo "<pre><font style=\"color: red;\">"; print_r($lldpintar); echo "</font></pre>";
+						}
+					}
 					//Good article on total switch power - http://forum.nedi.ch/index.php?topic=600.0
 					if($_POST['ciscointpoe'] || $_POST['ciscointpoedev']){
 						//Grab entPhysicalAlias ID's
@@ -2389,12 +2512,30 @@
 							$headerar[]="CDP Remote Interface";
 							$dataarstring=$dataarstring . ',$cdpintar[$theid]';
 						}
+						if($_POST['lldpname']){
+							$headerar[]="LLDP Name";
+							$dataarstring=$dataarstring . ',$lldpnamear[$theid]';
+						}
+						if($_POST['lldpip']){
+							$headerar[]="LLDP IP";
+							$dataarstring=$dataarstring . ',$lldpipar[$theid]';
+						}
+						if($_POST['lldpdev']){
+							$headerar[]="LLDP Device";
+							$dataarstring=$dataarstring . ',$lldpdevar[$theid]';
+						}
+						if($_POST['lldpint']){
+							$headerar[]="LLDP Remote Interface";
+							$dataarstring=$dataarstring . ',$lldpintar[$theid]';
+						}
 						echo "<table class=\"output\" id=\"floater2\">\n";
 						echo "<thead><tr>";
 						//Print out headerar for table
 						foreach($headerar as $header){
 							//Adjust header widths - Makes the floating header stay on 1 line when scrolling
-							if($header=='VLAN PVID'){
+							if($header=='Interface ID'){
+								echo "<th style=\"width: 100px;\">$header</th>";
+							} else if($header=='VLAN PVID'){
 								echo "<th style=\"width: 90px;\">$header</th>";
 							} else if($header=="Admin Status"){
 								echo "<th style=\"width: 110px;\">$header</th>";
@@ -2410,6 +2551,12 @@
 								echo "<th style=\"width: 125px;\">$header</th>";
 							} else if($header=="Out Rate (mbps)"){
 								echo "<th style=\"width: 130px;\">$header</th>";
+							} else if($header=="LLDP IP"){
+								echo "<th style=\"min-width: 80px;\">$header</th>";
+							} else if($header=="LLDP Device"){
+								echo "<th style=\"width: 230px;\">$header</th>";
+							} else if($header=="LLDP Remote Interface"){
+								echo "<th style=\"min-width: 180px;\">$header</th>";
 							} else {
 								echo "<th>$header</th>";
 							}
@@ -2676,6 +2823,18 @@
 								}
 								if($_POST['cdpint']){
 									echo "<td>" . $cdpintar[$theid] . "</td>";
+								}
+								if($_POST['lldpname']){
+									echo "<td>" . $lldpnamear[$theid] . "</td>";
+								}
+								if($_POST['lldpip']){
+									echo "<td>" . $lldpipar[$theid] . "</td>";
+								}
+								if($_POST['lldpdev']){
+									echo "<td>" . $lldpdevar[$theid] . "</td>";
+								}
+								if($_POST['lldpint']){
+									echo "<td>" . $lldpintar[$theid] . "</td>";
 								}
 								echo "</tr>\n";
 								/*
