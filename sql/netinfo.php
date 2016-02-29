@@ -155,7 +155,7 @@
 			<td><input type="text" name="theip" style="width: 150px; text-align: left;" <?php if($_POST['theip']) echo " value=\"{$_POST['theip']}\"";?> /></td>
 		</tr>
 		<tr>
-			<td>SNMP Version: <?php echo $_POST['snmpversion']; ?></td>
+			<td>SNMP Version:</td>
 			<td>
 				<select name="snmpversion" id="snmpversion" onchange="disable_enable_commstring()">
 					<option value="2c"<?php if($_POST['snmpversion']=="2c" || (!$_POST['snmpversion'] && $defaultsnmpversion=="2c")) echo " selected";?>>2c</option>
