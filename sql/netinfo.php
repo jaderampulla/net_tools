@@ -304,6 +304,16 @@
 			<td>&nbsp;&nbsp;&nbsp;&nbsp;
 			<input type="radio" name="macchoice" id="macchoice" value="cisco" <?php if($_POST['macchoice']=="cisco") echo "checked"; ?>>&nbsp;Cisco Method (Requirements <button style="background: none; border: none; padding: 0; margin: 0px -3px 0px -2px; color: blue; cursor: pointer; font-size: 1em;" onclick="CiscoRequirements()">here</button>)</td>
 		</tr>
+		
+		
+		
+		<tr name="macextremerow" id="macextremerow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
+			<td>&nbsp;&nbsp;&nbsp;&nbsp;
+			<input type="radio" name="macchoice" id="macchoice" value="extreme" <?php if($_POST['macchoice']=="extreme") echo "checked"; ?>>&nbsp;Extreme Switches <i>(MAC & VLAN)</i></td>
+		</tr>
+		
+		
+		
 		<tr name="macouirow" id="macouirow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
 			<td>&nbsp;&nbsp;&nbsp;&nbsp;
 			<input name="macoui" id="macoui" type="checkbox" <?php if($_POST['macoui']) echo "checked"; ?> />&nbsp;Show MAC address OUI Info</td>
@@ -314,6 +324,7 @@
 					document.getElementById("macstandardrow").style.display="none";
 					document.getElementById("macaltrow").style.display="none";
 					document.getElementById("macciscorow").style.display="none";
+					document.getElementById("macextremerow").style.display="none";
 					document.getElementById("macouirow").style.display="none";
 					document.getElementById("macoui").checked = false;
 					document.getElementById("routeriprow").style.display="none";
@@ -322,6 +333,7 @@
 					document.getElementById("macstandardrow").style.display="table-row";
 					document.getElementById("macaltrow").style.display="table-row";
 					document.getElementById("macciscorow").style.display="table-row";
+					document.getElementById("macextremerow").style.display="table-row";
 					document.getElementById("macouirow").style.display="table-row";
 				}
 			}
@@ -423,6 +435,7 @@
 					document.getElementById("macstandardrow").style.display="table-row";
 					document.getElementById("macaltrow").style.display="table-row";
 					document.getElementById("macciscorow").style.display="table-row";
+					document.getElementById("macextremerow").style.display="table-row";
 					document.getElementById("macouirow").style.display="table-row";
 					document.getElementById("routeriprow").style.display="table-row";
 				} else {
@@ -742,8 +755,9 @@
 				1.3.6.1.4.1.9.2.2.1.1.9						- Cisco PPS out (5 min average)
 				1.3.6.1.4.1.9.2.2.1.1.6						- Cisco input rate (5 minute average)
 				1.3.6.1.4.1.9.2.2.1.1.8						- Cisco output rate (5 minute average)
+				1.3.6.1.4.1.1916.1.2.1.2.1.10				- Extreme VLAN ID for MAC address table
 				*/
-				if($snmpval && ($commandstring=="SNMPv2-SMI::transmission.7.2.1.19" || $commandstring=="SNMPv2-SMI::transmission.7.2.1.7" || $commandstring=="SNMPv2-SMI::enterprises.9.9.68.1.2.2.1.2" || strstr($commandstring,'SNMPv2-SMI::enterprises.2272.1.3.3.1') || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.13" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14" || $commandstring=="SNMPv2-SMI::mib-2.17.1.4.1.2" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.7.1.5" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2") || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.6" || $commandstring=="1.3.6.1.2.1.47.1.1.1.1.14" || strstr($commandstring,'SNMPv2-SMI::mib-2.105.1.1.1.9.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.8.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.10.') || $commandstring=="SNMPv2-SMI::enterprises.9.9.402.1.3.1.1" || $commandstring=="SNMPv2-SMI::mib-2.47.1.1.1.1.7" || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.7') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.9') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.6') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.8')){
+				if($snmpval && ($commandstring=="SNMPv2-SMI::transmission.7.2.1.19" || $commandstring=="SNMPv2-SMI::transmission.7.2.1.7" || $commandstring=="SNMPv2-SMI::enterprises.9.9.68.1.2.2.1.2" || strstr($commandstring,'SNMPv2-SMI::enterprises.2272.1.3.3.1') || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.13" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14" || $commandstring=="SNMPv2-SMI::mib-2.17.1.4.1.2" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.7.1.5" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2") || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.6" || $commandstring=="1.3.6.1.2.1.47.1.1.1.1.14" || strstr($commandstring,'SNMPv2-SMI::mib-2.105.1.1.1.9.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.8.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.10.') || $commandstring=="SNMPv2-SMI::enterprises.9.9.402.1.3.1.1" || $commandstring=="SNMPv2-SMI::mib-2.47.1.1.1.1.7" || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.7') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.9') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.6') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.8') || strstr($commandstring,'1.3.6.1.4.1.1916.1.2.1.2.1.10')){
 					list($remain,$val)=explode(' ',$snmpval,2);
 					//Get ID by reversing string and exploding on first instance of "."
 					list($id,$junk)=explode(".",strrev($remain));
@@ -950,6 +964,26 @@
 					list($remain,$id)=explode(' ',$snmpval);
 					$val=end(explode('.',$remain));
 					$finar[$val]=$id;
+				//Handle the Extreme MAC index ID to interface ID mapping MIB
+				} else if($snmpval && strstr($commandstring,'1.3.6.1.4.1.1916.1.16.4.1.3')){
+					list($id,$val)=explode(' ',$snmpval);
+					$id=preg_replace('/enterprises.1916.1.16.4.1.3./','',$id);
+					$id=strrev($id);
+					list($junk,$id)=explode('.',$id,2);
+					$id=strrev($id);
+					$finar[$id]=$val;
+				//Handle the Extreme MAC index ID to interface ID mapping MIB
+				} else if($snmpval && strstr($commandstring,'1.3.6.1.4.1.1916.1.16.4.1.1')){
+					list($id,$val)=explode(' ',$snmpval,2);
+					$val=trim(preg_replace('/"/','',$val));
+					$val=preg_replace('/ /',':',$val);
+					$id=preg_replace('/enterprises.1916.1.16.4.1.1./','',$id);
+					$id=strrev($id);
+					list($vlanid,$id)=explode('.',$id,2);
+					$id=strrev($id);
+					$vlanid=strrev($vlanid);
+					$macvlanar[$id]=$vlanid;
+					$finar[$id]=$val;
 				//Handle the ARP MIB
 				} else if($snmpval && $commandstring=="IP-MIB::ipNetToMediaPhysAddress"){
 					list($remain,$id)=explode(' ',$snmpval);
@@ -1896,6 +1930,34 @@
 									unset($macvlanartemp);
 								}
 							}
+						} else if($_POST['macchoice']=="extreme"){
+							$ifindextomacindexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.1916.1.16.4.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							if($_POST['debug'] && $_POST['debugoutput']){
+								echo "<pre><font style=\"color: red;\">"; print_r($ifindextomacindexar); echo "</font></pre>";
+							}
+							list($ifmacindextomacaddar,$tmpmacvlanar)=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.1916.1.16.4.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							if($_POST['debug'] && $_POST['debugoutput']){
+								echo "<pre><font style=\"color: red;\">"; print_r($ifmacindextomacaddar); echo "</font></pre>";
+							}
+							//Put together arrays to match port ID and MAC Address
+							foreach($ifmacindextomacaddar as $ifindexkey=>$macadd){
+								//Make sure it's a MAC address (Sometimes values are messed up)
+								if(preg_match('/:/',$macadd)){
+									if(!array_key_exists($ifindextomacindexar[$ifindexkey],$ifindextomacar)){
+										$ifindextomacar[$ifindextomacindexar[$ifindexkey]]=array(0=>"$macadd");
+									} else {
+										array_push($ifindextomacar[$ifindextomacindexar[$ifindexkey]],"$macadd");
+									}
+								}
+							}
+							$vlanidar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.1916.1.2.1.2.1.10",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							if($_POST['debug'] && $_POST['debugoutput']){
+								echo "<pre><font style=\"color: red;\">"; print_r($vlanidar); echo "</font></pre>";
+							}
+							//Put together arrays to match MAC address and VLAN
+							foreach($tmpmacvlanar as $macid=>$vlanid){
+								$macvlanar[$ifmacindextomacaddar[$macid]]=$vlanidar[$vlanid];
+							}
 						} else {
 							$ifindextomacindexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.17.4.3.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
 							if($_POST['debug'] && $_POST['debugoutput']){
@@ -2454,7 +2516,7 @@
 							$dataarstring=$dataarstring . ',$hpvlanar[$theid],$h3cvlanmembersar[$theid],$h3cportcapabilities[$theid]';
 						}
 						if($_POST['clientmac'] || $_POST['clientarp']){
-							if($_POST['macchoice']=="alt" || $_POST['macchoice']=="cisco"){
+							if($_POST['macchoice']=="alt" || $_POST['macchoice']=="cisco" || $_POST['macchoice']=="extreme"){
 								$headerar[]="MAC Address(es) - VLAN";
 							} else {
 								$headerar[]="MAC Address(es)";
@@ -2668,7 +2730,7 @@
 									echo "<td>";
 									unset($tmpmacadd);
 									foreach($ifindextomacar[$theid] as $macadd){
-										if($_POST['macchoice']=="alt" || $_POST['macchoice']=="cisco"){
+										if($_POST['macchoice']=="alt" || $_POST['macchoice']=="cisco" || $_POST['macchoice']=="extreme"){
 											$tmpmacadd[]="$macadd - " . $macvlanar[$macadd];
 											echo "$macadd - " . $macvlanar[$macadd] . "<br />";
 										} else {
