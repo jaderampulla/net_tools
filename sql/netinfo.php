@@ -526,6 +526,9 @@
 						<td colspan="2"><input name="hidemgt" id="hidemgt" type="checkbox" <?php if($_POST['hidemgt']) echo "checked"; ?> />&nbsp;Management Ports</td>
 					</tr>
 					<tr>
+						<td colspan="3"><input name="hidertif" id="hidertif" type="checkbox" <?php if($_POST['hidertif']) echo "checked"; ?> />&nbsp;Extreme rtif ports</td>
+					</tr>
+					<tr>
 						<td colspan="3"><input name="hideintid" id="hideintid" type="checkbox" <?php if($_POST['hideintid']) echo "checked"; ?> />&nbsp;SNMP Interface ID's (CSV's):&nbsp;&nbsp;<input type="text" name="hideintidval" id="hideintidval" style="width: 100px; text-align: left;" <?php if($_POST['hideintid'] && $_POST['hideintidval']) echo " value=\"{$_POST['hideintidval']}\""; ?> /></td>
 					</tr>
 					<tr>
@@ -608,7 +611,13 @@
 						<td><input name="lldpint" id="lldpint" type="checkbox" <?php if($_POST['lldpint']) echo "checked"; ?> />&nbsp;LLDP Remote Interface</td>
 					</tr>
 					<tr>
-						<td colspan="3"><input name="exportfileformatrow" id="exportfileformatrow" type="checkbox" onclick="toggleFileFormats()" <?php if($_POST['exportfileformatrow']) echo "checked"; ?> />&nbsp;Adjust export file format</td>
+						<td colspan="2"><input name="edpdev" id="edpdev" type="checkbox" <?php if($_POST['edpdev']) echo "checked"; ?> />&nbsp;Extreme EDP Remote Device</td>
+					</tr>
+					<tr>
+						<td colspan="2"><input name="edpint" id="edpint" type="checkbox" <?php if($_POST['edpint']) echo "checked"; ?> />&nbsp;Extreme EDP Remote Interface</td>
+					</tr>
+					<tr>
+						<td colspan="2"><input name="exportfileformatrow" id="exportfileformatrow" type="checkbox" onclick="toggleFileFormats()" <?php if($_POST['exportfileformatrow']) echo "checked"; ?> />&nbsp;Adjust export file format</td>
 					</tr>
 					<tr name="exportfileformatrowextra" id="exportfileformatrowextra" <?php if($_POST['exportfileformatrow']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
 						<td colspan="2">&nbsp;&nbsp;
@@ -645,6 +654,8 @@
 					document.getElementById("lldpip").checked = false;
 					document.getElementById("lldpdev").checked = false;
 					document.getElementById("lldpint").checked = false;
+					document.getElementById("edpdev").checked = false;
+					document.getElementById("edpint").checked = false;
 					document.getElementById("exportfileformatrow").checked = false;
 				}
 			}
@@ -1154,6 +1165,14 @@
 						$val=preg_replace('/ /',':',$val);
 					}
 					$finar[$id]=$val;
+				//Handle EDP remote device
+				} else if($snmpval && $commandstring=="1.3.6.1.4.1.1916.1.13.2.1.3" || $commandstring=="1.3.6.1.4.1.1916.1.13.2.1.6"){
+					list($id,$val)=explode(' ',$snmpval,2);
+					$id=preg_replace('/enterprises.1916.1.13.2.1.3./','',$id);
+					$id=preg_replace('/enterprises.1916.1.13.2.1.6./','',$id);
+					$val=preg_replace('/"/','',$val);
+					list($id,$junk)=explode('.',$id,2);
+					$finar[$id]=$val;
 				//Handle everything else
 				} else {
 					//Get rid of ifDescr, ifName, ifAlias, etc
@@ -1341,6 +1360,17 @@
 						unset($ifdescartemp);
 						foreach($ifdescartemptemp as $id=>$desc){
 							if(!stristr($desc,'Management')){
+								$ifdescartemp[$id]=$desc;
+							}
+						}
+					}
+					//Hide Extreme rtif Ports
+					if($_POST['hidertif']){
+						unset($ifdescartemptemp);
+						$ifdescartemptemp=$ifdescartemp;
+						unset($ifdescartemp);
+						foreach($ifdescartemptemp as $id=>$desc){
+							if(!stristr($desc,'rtif')){
 								$ifdescartemp[$id]=$desc;
 							}
 						}
@@ -2276,6 +2306,18 @@
 							echo "<pre><font style=\"color: red;\">"; print_r($lldpintar); echo "</font></pre>";
 						}
 					}
+					if($_POST['edpdev']){
+						$edpdevar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.1916.1.13.2.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						if($_POST['debug'] && $_POST['debugoutput']){
+							echo "<pre><font style=\"color: red;\">"; print_r($edpdevar); echo "</font></pre>";
+						}
+					}
+					if($_POST['edpint']){
+						$edpintar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.1916.1.13.2.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						if($_POST['debug'] && $_POST['debugoutput']){
+							echo "<pre><font style=\"color: red;\">"; print_r($edpintar); echo "</font></pre>";
+						}
+					}
 					//Good article on total switch power - http://forum.nedi.ch/index.php?topic=600.0
 					if($_POST['ciscointpoe'] || $_POST['ciscointpoedev']){
 						//Grab entPhysicalAlias ID's
@@ -2590,6 +2632,14 @@
 							$headerar[]="LLDP Remote Interface";
 							$dataarstring=$dataarstring . ',$lldpintar[$theid]';
 						}
+						if($_POST['edpdev']){
+							$headerar[]="EDP Device";
+							$dataarstring=$dataarstring . ',$edpdevar[$theid]';
+						}
+						if($_POST['edpint']){
+							$headerar[]="EDP Remote Interface";
+							$dataarstring=$dataarstring . ',$edpintar[$theid]';
+						}
 						echo "<table class=\"output\" id=\"floater2\">\n";
 						echo "<thead><tr>";
 						//Print out headerar for table
@@ -2618,6 +2668,10 @@
 							} else if($header=="LLDP Device"){
 								echo "<th style=\"width: 230px;\">$header</th>";
 							} else if($header=="LLDP Remote Interface"){
+								echo "<th style=\"min-width: 180px;\">$header</th>";
+							} else if($header=="EDP Device"){
+								echo "<th style=\"width: 230px;\">$header</th>";
+							} else if($header=="EDP Remote Interface"){
 								echo "<th style=\"min-width: 180px;\">$header</th>";
 							} else {
 								echo "<th>$header</th>";
@@ -2897,6 +2951,12 @@
 								}
 								if($_POST['lldpint']){
 									echo "<td>" . $lldpintar[$theid] . "</td>";
+								}
+								if($_POST['edpdev']){
+									echo "<td>" . $edpdevar[$theid] . "</td>";
+								}
+								if($_POST['edpint']){
+									echo "<td>" . $edpintar[$theid] . "</td>";
 								}
 								echo "</tr>\n";
 								/*
