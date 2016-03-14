@@ -604,7 +604,7 @@
 					</tr>
 					<tr>
 						<td><input name="lldpname" id="lldpname" type="checkbox" <?php if($_POST['lldpname']) echo "checked"; ?> />&nbsp;LLDP Name</td>
-						<td><input name="lldpip" id="lldpip" type="checkbox" <?php if($_POST['lldpip']) echo "checked"; ?> />&nbsp;LLDP IP (Limited support)</td>
+						<td><input name="lldpip" id="lldpip" type="checkbox" <?php if($_POST['lldpip']) echo "checked"; ?> />&nbsp;LLDP MAC/IP (Limited support)</td>
 					</tr>
 					<tr>
 						<td><input name="lldpdev" id="lldpdev" type="checkbox" <?php if($_POST['lldpdev']) echo "checked"; ?> />&nbsp;LLDP Device</td>
@@ -694,6 +694,14 @@
 		}
 		return $bin;
 	}
+	function HexToASCII($instr){
+		$p='';
+		for ($i=0; $i < strlen($instr); $i=$i+2){
+			$p.= chr(hexdec(substr($instr,$i,2)));
+		}
+		return $p;
+	}
+	
 	function StandardSNMPGet($theip,$snmpversion,$snmpcommstring,$commandstring,$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,$outputmod,$errorreporting){
 		if($outputmod){
 			$printout=$outputmod;
@@ -728,6 +736,8 @@
 		}
 		if(strstr($commandstring,'Q-BRIDGE-MIB::dot1qTpFdbPort')){
 			$command="snmpbulkwalk -r 1 -L n -v $snmpversion $versioncmd -O Xsq $theip $commandstring";
+		} else if(strstr($commandstring,'1.0.8802.1.1.2.1.4.1.1.9')){
+			$command="snmpbulkwalk -r 1 -L n -v $snmpversion $versioncmd $theip $commandstring";
 		} else if(strstr($commandstring,'BRIDGE-MIB::dot1dTpFdbPort') || strstr($commandstring,'1.3.6.1.2.1.17.1.4.1.2')){
 			if($snmpversion=="2c"){
 				$command="snmpbulkwalk -r 1 -L n -v $snmpversion $versioncmd@$invlan -O Xsq $theip $commandstring";
@@ -1144,13 +1154,24 @@
 					$id=trim(preg_replace('/enterprises.9.9.23.1.2.1.1.4./','',$id));
 					list($id,$remain)=explode('.',$id);
 					$finar[$id]=$val;
-				//Handle LLDP IP
+				//Handle LLDP Neighbor Info
 				} else if($snmpval && ($commandstring=="1.0.8802.1.1.2.1.4.1.1.10" || $commandstring=="1.0.8802.1.1.2.1.4.1.1.9" || $commandstring=="1.0.8802.1.1.2.1.4.1.1.8" || $commandstring=="1.0.8802.1.1.2.1.4.1.1.5")){
 					list($id,$val)=explode(' "',$snmpval,2);
-					$val=trim(preg_replace('/"/','',$val));
-					list($junk,$id)=explode('.',strrev($id));
-					list($id,$junk)=explode('.',$id);
-					$id=strrev($id);
+					//Get values and ID's. Treat name differently because sometimes it's in HEX format
+					if($commandstring=="1.0.8802.1.1.2.1.4.1.1.9"){
+						$val=trim(preg_replace('/"/','',$val));
+						if(strstr($id,'Hex')){
+							list($junk,$val)=explode('STRING: ',$id);
+							$val=HexToASCII(preg_replace('/ /','',$val));
+						}
+						list($id,$junk)=explode(' = ',$id);
+						list($junk,$id)=explode('.',strrev($id));
+					} else {
+						$val=trim(preg_replace('/"/','',$val));
+						list($junk,$id)=explode('.',strrev($id));
+						list($id,$junk)=explode('.',$id);
+						$id=strrev($id);
+					}
 					//Get rid of domain names if there are any
 					if($commandstring=="1.0.8802.1.1.2.1.4.1.1.9" && strstr($val,'.')){
 						list($val,$junk)=explode('.',$val);
@@ -2621,7 +2642,7 @@
 							$dataarstring=$dataarstring . ',$lldpnamear[$theid]';
 						}
 						if($_POST['lldpip']){
-							$headerar[]="LLDP IP";
+							$headerar[]="LLDP MAC/IP";
 							$dataarstring=$dataarstring . ',$lldpipar[$theid]';
 						}
 						if($_POST['lldpdev']){
@@ -2663,7 +2684,7 @@
 								echo "<th style=\"width: 125px;\">$header</th>";
 							} else if($header=="Out Rate (mbps)"){
 								echo "<th style=\"width: 130px;\">$header</th>";
-							} else if($header=="LLDP IP"){
+							} else if($header=="LLDP MAC/IP"){
 								echo "<th style=\"min-width: 80px;\">$header</th>";
 							} else if($header=="LLDP Device"){
 								echo "<th style=\"width: 230px;\">$header</th>";
