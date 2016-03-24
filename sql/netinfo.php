@@ -66,6 +66,12 @@
 	if($_POST['lldpint']){
 		$basewidth+=180;
 	}
+	if($_POST['ciscovoicetype']=="cme"){
+		$basewidth+=650;
+	}
+	if($_POST['ciscovoicetype']=="cucm"){
+		$basewidth+=850;
+	}
 	$widthmod=" style=\"min-width: {$basewidth}px;\" ";
 	require("../include/header.php");
 	require ("../include/functions.php");
@@ -304,16 +310,10 @@
 			<td>&nbsp;&nbsp;&nbsp;&nbsp;
 			<input type="radio" name="macchoice" id="macchoice" value="cisco" <?php if($_POST['macchoice']=="cisco") echo "checked"; ?>>&nbsp;Cisco Method (Requirements <button style="background: none; border: none; padding: 0; margin: 0px -3px 0px -2px; color: blue; cursor: pointer; font-size: 1em;" onclick="CiscoRequirements()">here</button>)</td>
 		</tr>
-		
-		
-		
 		<tr name="macextremerow" id="macextremerow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
 			<td>&nbsp;&nbsp;&nbsp;&nbsp;
 			<input type="radio" name="macchoice" id="macchoice" value="extreme" <?php if($_POST['macchoice']=="extreme") echo "checked"; ?>>&nbsp;Extreme Switches <i>(MAC & VLAN)</i></td>
 		</tr>
-		
-		
-		
 		<tr name="macouirow" id="macouirow" <?php if($_POST['clientmac']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
 			<td>&nbsp;&nbsp;&nbsp;&nbsp;
 			<input name="macoui" id="macoui" type="checkbox" <?php if($_POST['macoui']) echo "checked"; ?> />&nbsp;Show MAC address OUI Info</td>
@@ -583,7 +583,6 @@
 				}
 			}
 		</script>
-		
 		<tr>
 			<td><input name="addfeatures" id="addfeatures" type="checkbox" onclick="toggleAddFeatures()" <?php if($_POST['addfeatures']) echo "checked"; ?> />&nbsp;Additional Features</td>
 		</tr>
@@ -657,6 +656,10 @@
 					document.getElementById("edpdev").checked = false;
 					document.getElementById("edpint").checked = false;
 					document.getElementById("exportfileformatrow").checked = false;
+					document.getElementById("ciscovoice").checked = false;
+					document.getElementById("ciscovoiceextra").style.display="none";
+					document.getElementById("ciscovoicesnmpbox").checked = false;
+					document.getElementById("ciscovoicesnmpcomm").setAttribute("disabled","disabled");
 				}
 			}
 			function toggleFileFormats() {
@@ -664,6 +667,47 @@
 					document.getElementById("exportfileformatrowextra").style.display="table-row";
 				} else {
 					document.getElementById("exportfileformatrowextra").style.display="none";
+				}
+			}
+		</script>
+		<tr>
+			<td><input name="ciscovoice" id="ciscovoice" type="checkbox" onclick="toggleCiscoVoice()" <?php if($_POST['ciscovoice']) echo "checked"; ?> />&nbsp;Cisco Voice (<i><b>MUST</b> show LLDP or CDP Name</i>)</td>
+		</tr>
+		<tr name="ciscovoiceextra" id="ciscovoiceextra" <?php if($_POST['ciscovoice']){ echo "style=\"display: table-row;\""; } else { echo "style=\"display: none;\""; } ?>>
+			<td>&nbsp;&nbsp;
+				<table border=0 style="display: inline-table;">
+					<tr>
+						<td>&nbsp;&nbsp;CME/CUCM IP address:&nbsp;<input type="text" name="ciscovoiceip" id="ciscovoiceip" style="width: 100px; text-align: left;" <?php if($_POST['ciscovoiceip']) echo " value=\"{$_POST['ciscovoiceip']}\""; ?> /></td>
+					</tr>
+					<tr>
+						<td><input type="radio" name="ciscovoicetype" id="ciscovoicetype" value="cme" <?php if($_POST['ciscovoicetype']=="cme") echo "checked"; ?>>&nbsp;CME</td>
+					</tr>
+					<tr>
+						<td><input type="radio" name="ciscovoicetype" id="ciscovoicetype" value="cucm" <?php if($_POST['ciscovoicetype']=="cucm" || !$_POST['ciscovoicetype']) echo "checked"; ?>>&nbsp;CUCM</td>
+					</tr>
+					<tr>
+						<td><input name="ciscovoicesnmpbox" id="ciscovoicesnmpbox" type="checkbox" onclick="toggleCiscoSNMP()" <?php if($_POST['ciscovoicesnmpbox']) echo "checked"; ?> />&nbsp;Alternate SNMPv2 Community:&nbsp;&nbsp;<input type="text" name="ciscovoicesnmpcomm" id="ciscovoicesnmpcomm" style="width: 100px; text-align: left;" <?php if($_POST['ciscovoicesnmpcomm']) echo " value=\"{$_POST['ciscovoicesnmpcomm']}\""; if(!$_POST['ciscovoicesnmpbox']) echo " disabled"; ?> /></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+		<script type="text/javascript">
+			function toggleCiscoVoice() {
+				if (document.getElementById("ciscovoiceextra").style.display=="none") {
+					document.getElementById("addfeatures").checked = true;
+					document.getElementById("addfeaturesextra").style.display="table-row";
+					document.getElementById("ciscovoiceextra").style.display="table-row";
+				} else {
+					document.getElementById("ciscovoiceextra").style.display="none";
+					document.getElementById("ciscovoicesnmpbox").checked = false;
+					document.getElementById("ciscovoicesnmpcomm").setAttribute("disabled","disabled");
+				}
+			}
+			function toggleCiscoSNMP() {
+				if (document.getElementById("ciscovoicesnmpbox").checked==true) {
+					document.getElementById("ciscovoicesnmpcomm").removeAttribute("disabled");
+				} else {
+					document.getElementById("ciscovoicesnmpcomm").setAttribute("disabled","disabled");
 				}
 			}
 		</script>
@@ -724,7 +768,7 @@
 		if($_POST['debug'] && $_POST['debugcommands']){
 			echo "<font style=\"color: purple;\"><b>COMMAND:</b> $command</font><br />";
 		}
-		return shell_exec($command);
+		return preg_replace('/"/','',shell_exec($command));
 	}
 	function StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,$commandstring,$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,$invlan){
 		if($snmpversion=="2c"){
@@ -777,8 +821,23 @@
 				1.3.6.1.4.1.9.2.2.1.1.6						- Cisco input rate (5 minute average)
 				1.3.6.1.4.1.9.2.2.1.1.8						- Cisco output rate (5 minute average)
 				1.3.6.1.4.1.1916.1.2.1.2.1.10				- Extreme VLAN ID for MAC address table
+				1.3.6.1.4.1.9.9.439.1.2.6.1.1				- Cisco Voice CME SEP ID's
+				1.3.6.1.4.1.9.9.439.1.1.43.1.3				- Cisco Voice CME phone IP's
+				1.3.6.1.4.1.9.9.439.1.1.43.1.5				- Cisco Voice CME phone models
+				1.3.6.1.4.1.9.9.439.1.2.6.1.4				- Cisco Voice CME phone status
+				1.3.6.1.4.1.9.9.439.1.1.47.1.4				- Cisco Voice CME DN
+				1.3.6.1.4.1.9.9.439.1.1.47.1.7				- Cisco Voice CME labels
+				1.3.6.1.4.1.9.9.439.1.1.47.1.6				- Cisco Voice CME names
+				1.3.6.1.4.1.9.9.156.1.2.1.1.20				- Cisco Voice CUCM SEP ID's
+				1.3.6.1.4.1.9.9.156.1.2.1.1.6				- Cisco Voice CUCM phone IP's
+				1.3.6.1.4.1.9.9.156.1.2.1.1.18				- Cisco Voice CUCM phone model ID
+				1.3.6.1.4.1.9.9.156.1.1.8.1.3				- Cisco Voice CUCM phone device ID
+				1.3.6.1.4.1.9.9.156.1.2.1.1.19				- Cisco Voice CUCM phone protocol
+				1.3.6.1.4.1.9.9.156.1.2.1.1.4				- Cisco Voice CUCM phone description
+				1.3.6.1.4.1.9.9.156.1.2.1.1.7				- Cisco Voice CUCM phone status
+				1.3.6.1.4.1.9.9.156.1.2.1.1.5				- Cisco Voice CUCM phone username
 				*/
-				if($snmpval && ($commandstring=="SNMPv2-SMI::transmission.7.2.1.19" || $commandstring=="SNMPv2-SMI::transmission.7.2.1.7" || $commandstring=="SNMPv2-SMI::enterprises.9.9.68.1.2.2.1.2" || strstr($commandstring,'SNMPv2-SMI::enterprises.2272.1.3.3.1') || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.13" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14" || $commandstring=="SNMPv2-SMI::mib-2.17.1.4.1.2" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.7.1.5" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2") || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.6" || $commandstring=="1.3.6.1.2.1.47.1.1.1.1.14" || strstr($commandstring,'SNMPv2-SMI::mib-2.105.1.1.1.9.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.8.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.10.') || $commandstring=="SNMPv2-SMI::enterprises.9.9.402.1.3.1.1" || $commandstring=="SNMPv2-SMI::mib-2.47.1.1.1.1.7" || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.7') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.9') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.6') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.8') || strstr($commandstring,'1.3.6.1.4.1.1916.1.2.1.2.1.10')){
+				if($snmpval && ($commandstring=="SNMPv2-SMI::transmission.7.2.1.19" || $commandstring=="SNMPv2-SMI::transmission.7.2.1.7" || $commandstring=="SNMPv2-SMI::enterprises.9.9.68.1.2.2.1.2" || strstr($commandstring,'SNMPv2-SMI::enterprises.2272.1.3.3.1') || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.13" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14" || $commandstring=="SNMPv2-SMI::mib-2.17.1.4.1.2" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5" || $commandstring=="1.3.6.1.4.1.2636.3.40.1.5.1.7.1.5" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2") || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.6" || $commandstring=="1.3.6.1.2.1.47.1.1.1.1.14" || strstr($commandstring,'SNMPv2-SMI::mib-2.105.1.1.1.9.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.8.') || strstr($commandstring,'SNMPv2-SMI::enterprises.9.9.402.1.2.1.10.') || $commandstring=="SNMPv2-SMI::enterprises.9.9.402.1.3.1.1" || $commandstring=="SNMPv2-SMI::mib-2.47.1.1.1.1.7" || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.7') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.9') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.6') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.8') || strstr($commandstring,'1.3.6.1.4.1.1916.1.2.1.2.1.10') || $commandstring=='1.3.6.1.4.1.9.9.439.1.2.6.1.1' || $commandstring=="1.3.6.1.4.1.9.9.439.1.1.43.1.3" || $commandstring=="1.3.6.1.4.1.9.9.439.1.1.43.1.5" || $commandstring=="1.3.6.1.4.1.9.9.439.1.2.6.1.4" || $commandstring=="1.3.6.1.4.1.9.9.439.1.1.47.1.4" || $commandstring=="1.3.6.1.4.1.9.9.439.1.1.47.1.7" || $commandstring=="1.3.6.1.4.1.9.9.439.1.1.47.1.6" || $commandstring=="1.3.6.1.4.1.9.9.156.1.2.1.1.20" || $commandstring=="1.3.6.1.4.1.9.9.156.1.2.1.1.6" || $commandstring=="1.3.6.1.4.1.9.9.156.1.2.1.1.18" || $commandstring=="1.3.6.1.4.1.9.9.156.1.1.8.1.3" || $commandstring=="1.3.6.1.4.1.9.9.156.1.2.1.1.19" || $commandstring=="1.3.6.1.4.1.9.9.156.1.2.1.1.4" || $commandstring=="1.3.6.1.4.1.9.9.156.1.2.1.1.7" || $commandstring=="1.3.6.1.4.1.9.9.156.1.2.1.1.5"){
 					list($remain,$val)=explode(' ',$snmpval,2);
 					//Get ID by reversing string and exploding on first instance of "."
 					list($id,$junk)=explode(".",strrev($remain));
@@ -867,12 +926,13 @@
 						} else {
 							$val="Unknown";
 						}
+					//Remove quotes for certain values
+					} else if($commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2" || $commandstring=="1.3.6.1.2.1.47.1.1.1.1.14" || strstr($commandstring,'SNMPv2-SMI::mib-2.105.1.1.1.9.') || $commandstring=="SNMPv2-SMI::mib-2.47.1.1.1.1.7" || $commandstring=="1.3.6.1.4.1.9.9.156.1.1.8.1.3" || $commandstring=="1.3.6.1.4.1.9.9.156.1.2.1.1.4" || $commandstring=="1.3.6.1.4.1.9.9.156.1.2.1.1.5"){
+						$val=trim(preg_replace('/\"/','',$val));
 					/*
 					Cisco VLAN Name
 					Avaya VLAN Name
 					*/
-					} else if($commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1" || $commandstring=="SNMPv2-SMI::enterprises.2272.1.3.2.1.2" || $commandstring=="1.3.6.1.2.1.47.1.1.1.1.14" || strstr($commandstring,'SNMPv2-SMI::mib-2.105.1.1.1.9.') || $commandstring=="SNMPv2-SMI::mib-2.47.1.1.1.1.7"){
-						$val=trim(preg_replace('/\"/','',$val));
 					} else if($commandstring=="SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1"){
 						if($val==1){
 							$val="Operational";
@@ -890,11 +950,36 @@
 						if($val>0){
 							$val=number_format(round(((trim($val))/1000),2),2);
 						}
-					} else 
-						
+					//Cisco CUCM phone protocol
+					} else if($commandstring=="1.3.6.1.4.1.9.9.156.1.2.1.1.19"){
+						if($val==1){
+							$val="Unknown";
+						} else if($val==2){
+							$val="SCCP";
+						} else if($val==3){
+							$val="SIP";
+						}
+					//Cisco CUCM phone status
+					} else if($commandstring=="1.3.6.1.4.1.9.9.156.1.2.1.1.7"){
+						if($val==1){
+							$val="Unknown";
+						} else if($val==2){
+							$val="Registered";
+						} else if($val==3){
+							$val="Unregistered";
+						} else if($val==4){
+							$val="Rejected";
+						} else if($val==5){
+							$val="Partially Registered";
+						}
+					}
 					//Modify speed and bandwidth values
 					if(strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.6') || strstr($commandstring,'1.3.6.1.4.1.9.2.2.1.1.8')){
 						$val=round($val/1000000,3);
+					}
+					//Get rid of quotes
+					if($commandstring=="1.3.6.1.4.1.9.9.439.1.2.6.1.1" || $commandstring=="1.3.6.1.4.1.9.9.439.1.1.43.1.3" || $commandstring=="1.3.6.1.4.1.9.9.439.1.1.43.1.5" || $commandstring=="1.3.6.1.4.1.9.9.439.1.1.47.1.4" || $commandstring=="1.3.6.1.4.1.9.9.439.1.1.47.1.7" || $commandstring=="1.3.6.1.4.1.9.9.439.1.1.47.1.6" || $commandstring=="1.3.6.1.4.1.9.9.156.1.2.1.1.20"){
+						$val=preg_replace('/"/','',$val);
 					}
 					$finar[$id]=$val;
 				//Handle the index to MAC MIB
@@ -1137,6 +1222,10 @@
 					$val=trim(preg_replace('/"/','',$val));
 					if($commandstring=="SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.6"){
 						$id=trim(preg_replace('/enterprises.9.9.23.1.2.1.1.6./','',$id));
+						//Check first 3 characters of CDP name for "SEP" and make everything uppercase. Sometimes phones don't come back uppercase
+						if(substr($val,0,3)=="SEP"){
+							$val=strtoupper($val);
+						}
 					} else if($commandstring=="SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.8"){
 						$id=trim(preg_replace('/enterprises.9.9.23.1.2.1.1.8./','',$id));
 					} else if($commandstring=="SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.7"){
@@ -1166,6 +1255,7 @@
 						}
 						list($id,$junk)=explode(' = ',$id);
 						list($junk,$id)=explode('.',strrev($id));
+						$id=strrev($id);
 					} else {
 						$val=trim(preg_replace('/"/','',$val));
 						list($junk,$id)=explode('.',strrev($id));
@@ -1194,6 +1284,67 @@
 					$val=preg_replace('/"/','',$val);
 					list($id,$junk)=explode('.',$id,2);
 					$finar[$id]=$val;
+				//Handle Cisco Voice CME phone button layout
+				} else if($snmpval && $commandstring=="1.3.6.1.4.1.9.9.439.1.1.46.1.2"){
+					list($id,$val)=explode(' ',$snmpval,2);
+					$val=preg_replace('/"/','',$val);
+					if(substr($val,-1)=="."){
+						$val=rtrim($val,".");
+					}
+					list($junk,$id)=explode('.',strrev($id));
+					$id=strrev($id);
+					list($button,$dn)=explode(':',$val);
+					$button=preg_replace('/Btn /','',$button);
+					$dn=preg_replace('/Uses Dn /','',$dn);
+					//Create array of SEP ID"s to DN ID's with DN values
+					/* EXAMPLE:
+					Array
+					(
+						[1] => Array
+							(
+								[1] =>  298
+								[2] =>  291
+								[3] =>  296
+								[4] =>  294
+							)
+
+						[2] => Array
+							(
+								[1] =>  297
+								[2] =>  289
+								[3] =>  296
+								[4] =>  295
+								[5] =>  294
+								[6] =>  291
+							)
+
+						[3] => Array
+							(
+								[1] =>  296
+								[2] =>  289
+								[3] =>  298
+								[4] =>  297
+								[5] =>  294
+								[6] =>  291
+							)
+					)
+					*/
+					if(sizeof($finar[$id])==0){
+						$finar[$id]=array($button=>$dn);
+					} else {
+						$finar[$id][$button]=$dn;
+					}
+				//Handle Cisco Voice CUCM Extensions
+				} else if($snmpval && $commandstring=="1.3.6.1.4.1.9.9.156.1.2.5.1.2"){
+					list($id,$val)=explode(' ',$snmpval,2);
+					list($junk,$id)=explode('.',strrev($id));
+					$id=strrev($id);
+					$val=preg_replace('/"/','',$val);
+					if(sizeof($finar[$id])==0){
+						$finar[$id]=array(0=>$val);
+					} else {
+						array_push($finar[$id],$val);
+					}
 				//Handle everything else
 				} else {
 					//Get rid of ifDescr, ifName, ifAlias, etc
@@ -1245,7 +1396,7 @@
 		$arpmethod=$_POST['arpmethod'];
 		$dnsserver=$_POST['dnsserver'];
 		if(!$theip){
-			echo "<br />Please enter an IP address<br />\n";
+			echo "<br />Please enter a device IP address<br />\n";
 		} else if (!$snmpcommstring && $snmpversion=="2c"){
 			echo "<br />Please enter an SNMPv2 community string<br />\n";
 		} else if($snmpversion==3 && !$snmpv3user){
@@ -1281,7 +1432,7 @@
 				$testsnmp=StandardSNMPGet($theip,$snmpversion,$snmpcommstring,"SNMPv2-MIB::sysName.0",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,"-O qv","showerrors");
 				//echo "TESTSNMP: $testsnmp<br />";
 				if(strstr($testsnmp,'user name')){
-					echo "<br />The SNMPv3 username you entered is incorrect.\n";
+					echo "<br />The SNMPv3 username you entered is incorrect or SNMPv3 is not configured on the device.\n";
 				} else if(strstr($testsnmp,'Authentication failure')){
 					echo "<br />The SNMPv3 authentication protocol and/or password you entered is incorrect.\n";
 				} else if(strstr($testsnmp,'Decryption error')){
@@ -2278,7 +2429,6 @@
 							echo "<pre><font style=\"color: red;\">"; print_r($cdpintar); echo "</font></pre>";
 						}
 					}
-					
 					function LLDPIDChecker($inar,$ifdescar){
 						$lldpidcount=0;
 						//Check if LLDP ID's exist in interface ID's
@@ -2429,6 +2579,335 @@
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($ciscopoedevar); echo "</font></pre>";
 							}
+						}
+					}
+					if($_POST['ciscovoice']){
+						$ciscocmeworks=false;
+						$ciscocucmworks=false;
+						//Make sure LLDP/CDP name was checked
+						if($_POST['lldpname'] || $_POST['cdpname']){
+							//Make sure voice IP was entered
+							if($_POST['ciscovoiceip']){
+								//Make sure if SNMP alternate box was checked, a string was entered
+								if(($_POST['ciscovoicesnmpbox'] && $_POST['ciscovoicesnmpcomm']!=null) || !$_POST['ciscovoicesnmpbox']){
+									$ciscovoiceip=$_POST['ciscovoiceip'];
+									//Use alternate SNMP if checked
+									if($_POST['ciscovoicesnmpbox'] && $_POST['ciscovoicesnmpcomm']){
+										$snmpstringciscovoice=$_POST['ciscovoicesnmpcomm'];
+										//Switch can be v3 and Cisco voice v2
+										$snmpversionciscovoice="2c";
+									} else {
+										$snmpstringciscovoice=$snmpcommstring;
+										$snmpversionciscovoice=$snmpversion;
+									}
+									//Test SNMP by grabbing hostname
+									$testciscovoicesnmp=StandardSNMPGet($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"SNMPv2-MIB::sysName.0",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,"-O qv","showerrors");
+									if(strstr($testciscovoicesnmp,'user name')){
+										echo "<font style=\"color: red;\">The SNMPv3 username you entered is incorrect for CME/CUCM device '$ciscovoiceip' or SNMPv3 is not configured on the device.</font><br /><br />\n";
+									} else if(strstr($testciscovoicesnmp,'Authentication failure')){
+										echo "<font style=\"color: red;\">The SNMPv3 authentication protocol and/or password you entered is incorrect for CME/CUCM device '$ciscovoiceip'.</font><br /><br />\n";
+									} else if(strstr($testciscovoicesnmp,'Decryption error')){
+										echo "<font style=\"color: red;\">The SNMPv3 privacy protocol you entered is incorrect for CME/CUCM device '$ciscovoiceip'.</font><br /><br />\n";
+									} else if((strlen($testciscovoicesnmp)==0 || strstr($testciscovoicesnmp,'Timeout')) && $snmpversionciscovoice==3){
+										echo "<font style=\"color: red;\">The IP address '$ciscovoiceip' is not responsive to SNMP queries.<br />Either the SNMPv3 privacy password you entered is incorrect, or SNMPv3 is not configured on the device.</font><br /><br />\n";
+									} else if(strlen($testciscovoicesnmp)==0 && $snmpversionciscovoice==2){
+										echo "<font style=\"color: red;\">The IP address '$ciscovoiceip' is not responsive to SNMP queries with RO community string you entered.</font><br /><br />\n";
+									} else if(strlen($testciscovoicesnmp)>0){
+										//All HTML input correct and SNMP works, check for CME/CUCM
+										if($_POST['ciscovoicetype']=="cme"){
+											$cmeversion=StandardSNMPGet($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.2.0",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+											if($cmeversion && !strstr($cmeversion,'No Such')){
+												$ciscocmeworks=true;
+												echo "<b>Cisco CME System Name:</b> $testciscovoicesnmp<br />\n";
+												$cmesysdescr=preg_replace('!\s+!', ' ',StandardSNMPGet($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"SNMPv2-MIB::sysDescr.0",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass));
+												$cmesystemmsg=StandardSNMPGet($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.37.0",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+												echo "<b>Cisco CME System Message:</b> $cmesystemmsg<br />\n";
+												echo "<b>Cisco CME System Description:</b> $cmesysdescr<br />\n";
+												$cmeuptime=StandardSNMPGet($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"DISMAN-EVENT-MIB::sysUpTimeInstance",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,"-O v");
+												echo "<b>Cisco CME Uptime:</b> $cmeuptime<br />\n";
+												echo "<b>Cisco CME Version:</b> $cmeversion<br />\n";
+												$cmemaxephones=StandardSNMPGet($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.6.0",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+												echo "<b>Cisco CME Max Ephones:</b> $cmemaxephones<br />\n";
+												$cmeephonesconfigured=StandardSNMPGet($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.2.2.0",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+												echo "<b>Cisco CME Ephones Configured:</b> $cmeephonesconfigured<br />\n";
+												$cmeephonesregistered=StandardSNMPGet($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.2.3.0",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+												echo "<b>Cisco CME Ephones Registered:</b> $cmeephonesregistered<br />\n";
+												$ephonesonswitch=0;
+												$usecdpforsep=true;
+												if($_POST['cdpname']){
+													foreach($cdpnamear as $cdpname){
+														//Check first 3 characters of CDP name for "SEP"
+														if(substr($cdpname,0,3)=="SEP"){
+															$ephonesonswitch+=1;
+														}
+													}
+												}
+												//Only check LLDP if it's selected and CDP showed nothing...prefer CDP results
+												if($_POST['lldpname'] && $ephonesonswitch==0){
+													$usecdpforsep=false;
+													foreach($lldpnamear as $lldpname){
+														//Check first 3 characters of LLDP name for "SEP"
+														if(substr($lldpname,0,3)=="SEP"){
+															$ephonesonswitch+=1;
+														}
+													}
+												}
+												echo "<b>Cisco CME Ephones on $theip:</b> $ephonesonswitch<br /><br />\n";
+												//Only get phone info if there are phones on the switch
+												if($ephonesonswitch>0){
+													$cmesepidar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.2.6.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													if($usecdpforsep==true){
+														foreach($cdpnamear as $cdpid=>$cdpname){
+															if(substr($cdpname,0,3)=="SEP"){
+																//Array ID is interface ID, value is SEP ID
+																$cmesepidtosepidar[$cdpid]=array_search($cdpname,$cmesepidar);
+															}
+														}
+													} else {
+														foreach($lldpnamear as $lldpid=>$lldpname){
+															if(substr($lldpname,0,3)=="SEP"){
+																//Array ID is interface ID, value is SEP ID
+																$cmesepidtosepidar[$lldpid]=array_search($lldpname,$cmesepidar);
+															}
+														}
+													}
+													if($_POST['debug'] && $_POST['debugoutput']){
+														echo "<pre><font style=\"color: red;\">"; print_r($cmesepidtosepidar); echo "</font></pre>";
+													}
+													$cmephoneipstempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.43.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													foreach($cmephoneipstempar as $phoneipsepid=>$phoneip){
+														if($phoneip && $phoneip!='0.0.0.0' && array_search($phoneipsepid,$cmesepidtosepidar)!=0){
+															$cmephoneipsar[array_search($phoneipsepid,$cmesepidtosepidar)]=$phoneip;
+														}
+													}
+													if($_POST['debug'] && $_POST['debugoutput']){
+														echo "<pre><font style=\"color: red;\">"; print_r($cmephoneipsar); echo "</font></pre>";
+													}
+													$cmephonemodeltempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.43.1.5",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													foreach($cmephonemodeltempar as $phonemodelsepid=>$phonemodel){
+														if($phonemodel && array_search($phonemodelsepid,$cmesepidtosepidar)!=0){
+															$cmephonemodelar[array_search($phonemodelsepid,$cmesepidtosepidar)]=$phonemodel;
+														}
+													}
+													if($_POST['debug'] && $_POST['debugoutput']){
+														echo "<pre><font style=\"color: red;\">"; print_r($cmephonemodelar); echo "</font></pre>";
+													}
+													$cmephonestatustempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.2.6.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													foreach($cmephonestatustempar as $phonestatussepid=>$phonestatus){
+														if($phonestatus && array_search($phonestatussepid,$cmesepidtosepidar)!=0){
+															if($phonestatus=="1"){
+																$phonestatus="On Hook";
+															} else if($phonestatus=="2"){
+																$phonestatus="Off Hook";
+															} else if($phonestatus=="3"){
+																$phonestatus="Ringing";
+															} else if($phonestatus=="4"){
+																$phonestatus="Paging";
+															}
+															$cmephonestatusar[array_search($phonestatussepid,$cmesepidtosepidar)]=$phonestatus;
+														}
+													}
+													if($_POST['debug'] && $_POST['debugoutput']){
+														echo "<pre><font style=\"color: red;\">"; print_r($cmephonestatusar); echo "</font></pre>";
+													}
+													$cmednar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.47.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													if($_POST['debug'] && $_POST['debugoutput']){
+														echo "<pre><font style=\"color: red;\">"; print_r($cmednar); echo "</font></pre>";
+													}
+													$cmebuttonlayouttempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.46.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													foreach($cmebuttonlayouttempar as $buttonlayoutid=>$buttonlayout){
+														if(substr($buttonlayout,-1)=="."){
+															$buttonlayout=rtrim($buttonlayout,".");
+														}
+														$buttonlayoutid=array_search($buttonlayoutid,$cmesepidtosepidar);
+														//Match SNMP DN ID with actual ID
+														foreach($buttonlayout as $buttonid=>$dnid){
+															$dnid=trim($dnid);
+															$buttonlayoutar[$dnid]="button: $buttonid, ephone-dn: $dnid, number: " . $cmednar[$dnid];
+														}
+														if($buttonlayoutid>0){
+															$cmebuttonlayoutar[$buttonlayoutid]=$buttonlayoutar;
+														}
+														unset($buttonlayoutar);
+													}
+													if($_POST['debug'] && $_POST['debugoutput']){
+														echo "<pre><font style=\"color: red;\">"; print_r($cmebuttonlayoutar); echo "</font></pre>";
+													}
+													$cmednlabeltempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.47.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													//Loop through button layout and create arrays for each port matching the DN label
+													foreach($cmebuttonlayoutar as $intid=>$tmpbuttonlayoutar){
+														foreach($tmpbuttonlayoutar as $labelid=>$unused){
+															$cmednlabelar[$intid][$labelid]=$cmednlabeltempar[$labelid];
+														}
+													}
+													if($_POST['debug'] && $_POST['debugoutput']){
+														echo "<pre><font style=\"color: red;\">"; print_r($cmednlabelar); echo "</font></pre>";
+													}
+													$cmednnametempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.47.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													//Loop through button layout and create arrays for each port matching the DN label
+													foreach($cmebuttonlayoutar as $intid=>$tmpbuttonlayoutar){
+														foreach($tmpbuttonlayoutar as $nameid=>$unused){
+															$cmednnamear[$intid][$nameid]=$cmednnametempar[$nameid];
+														}
+													}
+													if($_POST['debug'] && $_POST['debugoutput']){
+														echo "<pre><font style=\"color: red;\">"; print_r($cmednnamear); echo "</font></pre>";
+													}
+												}
+											} else {
+												echo "<font style=\"color: red;\">'$ciscovoiceip' is responsive to SNMP but it's not a CME device.</font><br /><br />\n";
+											}
+										} else if($_POST['ciscovoicetype']=="cucm"){
+											$cucmversion=StandardSNMPGet($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.1.2.1.4.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+											if($cucmversion && !strstr($cucmversion,'No Such')){
+												$ciscocucmworks=true;
+												echo "<b>Cisco CUCM System Name:</b> $testciscovoicesnmp<br />\n";
+												$cucmsysdescr=preg_replace('!\s+!', ' ',StandardSNMPGet($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"SNMPv2-MIB::sysDescr.0",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass));
+												echo "<b>Cisco CUCM System Description:</b> $cucmsysdescr<br />\n";
+												$cucmuptime=StandardSNMPGet($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"DISMAN-EVENT-MIB::sysUpTimeInstance",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,"-O v");
+												echo "<b>Cisco CUCM Uptime:</b> $cucmuptime<br />\n";
+												echo "<b>Cisco CUCM Version:</b> $cucmversion<br />\n";
+												
+												$ephonesonswitch=0;
+												$usecdpforsep=true;
+												if($_POST['cdpname']){
+													foreach($cdpnamear as $cdpname){
+														//Check first 3 characters of CDP name for "SEP"
+														if(substr($cdpname,0,3)=="SEP"){
+															$ephonesonswitch+=1;
+														}
+													}
+												}
+												//Only check LLDP if it's selected and CDP showed nothing...prefer CDP results
+												if($_POST['lldpname'] && $ephonesonswitch==0){
+													$usecdpforsep=false;
+													foreach($lldpnamear as $lldpname){
+														//Check first 3 characters of LLDP name for "SEP"
+														if(substr($lldpname,0,3)=="SEP"){
+															$ephonesonswitch+=1;
+														}
+													}
+												}
+												$cucmsepidar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.20",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+												echo "<b>Cisco CUCM Phones Configured:</b> " . count($cucmsepidar) . "<br />\n";
+												if($usecdpforsep==true){
+													foreach($cdpnamear as $cdpid=>$cdpname){
+														if(substr($cdpname,0,3)=="SEP"){
+															//Array ID is interface ID, value is SEP ID
+															$cucmsepidtosepidar[$cdpid]=array_search($cdpname,$cucmsepidar);
+														}
+													}
+												} else {
+													foreach($lldpnamear as $lldpid=>$lldpname){
+														if(substr($lldpname,0,3)=="SEP"){
+															//Array ID is interface ID, value is SEP ID
+															$cucmsepidtosepidar[$lldpid]=array_search($lldpname,$cucmsepidar);
+														}
+													}
+												}
+												//Only get phone info if there are phones on the switch
+												if($ephonesonswitch>0){
+													$cucmphoneipstempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													foreach($cucmphoneipstempar as $phoneipsepid=>$phoneip){
+														if($phoneip && $phoneip!='0.0.0.0' && array_search($phoneipsepid,$cucmsepidtosepidar)!=0){
+															$cucmphoneipsar[array_search($phoneipsepid,$cucmsepidtosepidar)]=$phoneip;
+														}
+													}
+													if($_POST['debug'] && $_POST['debugoutput']){
+														echo "<pre><font style=\"color: red;\">"; print_r($cucmphoneipsar); echo "</font></pre>";
+													}
+													$cucmphonemodelidar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.18",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$cucmphonemodeldevicear=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.1.8.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													//Merge SEP ID to model ID array with model ID to actual model and finally tie all that to a physical port
+													foreach($cucmphonemodelidar as $phonemodelsepid=>$phonemodel){
+														if($phonemodel && array_search($phonemodelsepid,$cucmsepidtosepidar)!=0){
+															$cucmphonemodelar[array_search($phonemodelsepid,$cucmsepidtosepidar)]=$cucmphonemodeldevicear[$phonemodel];
+														}
+													}
+													if($_POST['debug'] && $_POST['debugoutput']){
+														echo "<pre><font style=\"color: red;\">"; print_r($cucmphonemodelar); echo "</font></pre>";
+													}
+													$cucmphoneprototempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.19",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													foreach($cucmphoneprototempar as $phoneprotosepid=>$phoneproto){
+														if($phoneproto && array_search($phoneprotosepid,$cucmsepidtosepidar)!=0){
+															$cucmphoneprotoar[array_search($phoneprotosepid,$cucmsepidtosepidar)]=$phoneproto;
+														}
+													}
+													if($_POST['debug'] && $_POST['debugoutput']){
+														echo "<pre><font style=\"color: red;\">"; print_r($cucmphoneprotoar); echo "</font></pre>";
+													}
+													$cucmphonestatustempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$registeredphones=0;
+													foreach($cucmphonestatustempar as $phonestatussepid=>$phonestatus){
+														if($phonestatus=="Registered"){
+															$registeredphones+=1;
+														}
+														if($phonestatus && array_search($phonestatussepid,$cucmsepidtosepidar)!=0){
+															$cucmphonestatusar[array_search($phonestatussepid,$cucmsepidtosepidar)]=$phonestatus;
+														}
+													}
+													echo "<b>Cisco CUCM Phones Registered:</b> $registeredphones<br />\n";
+													echo "<b>Cisco CUCM Phones on $theip:</b> $ephonesonswitch<br /><br />\n";
+													if($_POST['debug'] && $_POST['debugoutput']){
+														echo "<pre><font style=\"color: red;\">"; print_r($cucmphonestatusar); echo "</font></pre>";
+													}
+													$cucmphonedesctempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													foreach($cucmphonedesctempar as $phonedescsepid=>$phonedesc){
+														if($phonedesc && array_search($phonedescsepid,$cucmsepidtosepidar)!=0){
+															$cucmphonedescar[array_search($phonedescsepid,$cucmsepidtosepidar)]=$phonedesc;
+														}
+													}
+													if($_POST['debug'] && $_POST['debugoutput']){
+														echo "<pre><font style=\"color: red;\">"; print_r($cucmphonedescar); echo "</font></pre>";
+													}
+													$cucmphoneusertempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.5",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													foreach($cucmphoneusertempar as $phoneusersepid=>$phoneuser){
+														if($phoneuser && array_search($phoneusersepid,$cucmsepidtosepidar)!=0){
+															$cucmphoneuserar[array_search($phoneusersepid,$cucmsepidtosepidar)]=$phoneuser;
+														}
+													}
+													if($_POST['debug'] && $_POST['debugoutput']){
+														echo "<pre><font style=\"color: red;\">"; print_r($cucmphoneuserar); echo "</font></pre>";
+													}
+													$cucmphoneexttempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.5.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													//Create phone extension array based on interface ID
+													foreach($cucmphoneexttempar as $phoneextsepid=>$phoneextar){
+														if(array_search($phoneextsepid,$cucmsepidtosepidar)!=0){
+															//If there's only one extension
+															if(sizeof($phoneextar)==1){
+																$cucmphoneextar[array_search($phoneextsepid,$cucmsepidtosepidar)]=array(0=>$phoneextar[0]);
+															//If there are more extensions
+															} else {
+																//Loop through each extension
+																foreach($phoneextar as $phoneext){
+																	//If it's the first extension
+																	if(sizeof($cucmphoneextar[array_search($phoneextsepid,$cucmsepidtosepidar)])==0){
+																		$cucmphoneextar[array_search($phoneextsepid,$cucmsepidtosepidar)]=array(0=>$phoneext);
+																	//If it's an additional extension
+																	} else {
+																		array_push($cucmphoneextar[array_search($phoneextsepid,$cucmsepidtosepidar)],$phoneext);
+																	}
+																}
+															}
+														}
+													}
+													if($_POST['debug'] && $_POST['debugoutput']){
+														echo "<pre><font style=\"color: red;\">"; print_r($cucmphoneextar); echo "</font></pre>";
+													}
+												}
+											} else {
+												echo "<font style=\"color: red;\">'$ciscovoiceip' is responsive to SNMP but it's not a CUCM device.</font><br /><br />\n";
+											}
+										}
+									}
+								} else {
+									echo "<font style=\"color: red;\">You selected to use an alternate SNMPv2 community for Cisco Voice. Please enter one.</font><br /><br />\n";
+								}
+							} else {
+								echo "<font style=\"color: red;\">Please enter CME/CUCM IP address</font><br /><br />\n";
+							}
+						} else {
+							echo "<font style=\"color: red;\">Please select <b><i>LLDP Name</i></b> or <b><i>CDP Name</i></b> in Additional Features to get Cisco phone device names</font><br /><br />\n";
 						}
 					}
 					if($_POST['debug']){
@@ -2661,6 +3140,25 @@
 							$headerar[]="EDP Remote Interface";
 							$dataarstring=$dataarstring . ',$edpintar[$theid]';
 						}
+						if($ciscocmeworks==true){
+							$headerar[]="CME Phone IP";
+							$headerar[]="CME Phone Model";
+							$headerar[]="CME Phone Status";
+							$headerar[]="CME Phone Button Info";
+							$headerar[]="CME DN Label(s)";
+							$headerar[]="CME DN Name(s)";
+							$dataarstring=$dataarstring . ',$cmephoneipsar[$theid],$cmephonemodelar[$theid],$cmephonestatusar[$theid],$cmebuttonlayoutar[$theid],$cmednlabelar[$theid],$cmednnamear[$theid]';
+						}
+						if($ciscocucmworks==true){
+							$headerar[]="CUCM Phone IP";
+							$headerar[]="CUCM Phone Model";
+							$headerar[]="CUCM Phone Protocol";
+							$headerar[]="CUCM Phone Status";
+							$headerar[]="CUCM Phone Description";
+							$headerar[]="CUCM Phone Username";
+							$headerar[]="CUCM Phone Extension(s)";
+							$dataarstring=$dataarstring . ',$cucmphoneipsar[$theid],$cucmphonemodelar[$theid],$cucmphoneprotoar[$theid],$cucmphonestatusar[$theid],$cucmphonedescar[$theid],$cucmphoneuserar[$theid],$cucmphoneextar[$theid]';
+						}
 						echo "<table class=\"output\" id=\"floater2\">\n";
 						echo "<thead><tr>";
 						//Print out headerar for table
@@ -2674,6 +3172,8 @@
 								echo "<th style=\"width: 110px;\">$header</th>";
 							} else if($header=="Operational Status"){
 								echo "<th style=\"width: 150px;\">$header</th>";
+							} else if($header=="Speed (Mbps)"){
+								echo "<th style=\"min-width: 120px;\">$header</th>";
 							} else if($header=="Operational Mode"){
 								echo "<th style=\"width: 150px;\">$header</th>";
 							} else if($header=="MAC Address(es) - VLAN"){
@@ -2693,6 +3193,18 @@
 							} else if($header=="EDP Device"){
 								echo "<th style=\"width: 230px;\">$header</th>";
 							} else if($header=="EDP Remote Interface"){
+								echo "<th style=\"min-width: 180px;\">$header</th>";
+							} else if($header=="CME Phone IP"){
+								echo "<th style=\"min-width: 120px;\">$header</th>";
+							} else if($header=="CME Phone Model"){
+								echo "<th style=\"min-width: 150px;\">$header</th>";
+							} else if($header=="CME Phone Status"){
+								echo "<th style=\"min-width: 150px;\">$header</th>";
+							} else if($header=="CME Phone Button Info"){
+								echo "<th style=\"min-width: 330px;\">$header</th>";
+							} else if($header=="CME DN Label(s)"){
+								echo "<th style=\"min-width: 180px;\">$header</th>";
+							} else if($header=="CME DN Name(s)"){
 								echo "<th style=\"min-width: 180px;\">$header</th>";
 							} else {
 								echo "<th>$header</th>";
@@ -2978,6 +3490,39 @@
 								}
 								if($_POST['edpint']){
 									echo "<td>" . $edpintar[$theid] . "</td>";
+								}
+								if($ciscocmeworks==true){
+									echo "<td>" . $cmephoneipsar[$theid] . "</td>";
+									echo "<td>" . $cmephonemodelar[$theid] . "</td>";
+									echo "<td>" . $cmephonestatusar[$theid] . "</td>";
+									echo "<td>";
+									foreach($cmebuttonlayoutar[$theid] as $cmebutton){
+										echo "$cmebutton<br />";
+									}
+									echo "</td>";
+									echo "<td>";
+									foreach($cmednlabelar[$theid] as $dnlabel){
+										echo "$dnlabel<br />";
+									}
+									echo "</td>";
+									echo "<td>";
+									foreach($cmednnamear[$theid] as $dnname){
+										echo "$dnname<br />";
+									}
+									echo "</td>";
+								}
+								if($ciscocucmworks==true){
+									echo "<td>" . $cucmphoneipsar[$theid] . "</td>";
+									echo "<td>" . $cucmphonemodelar[$theid] . "</td>";
+									echo "<td>" . $cucmphoneprotoar[$theid] . "</td>";
+									echo "<td>" . $cucmphonestatusar[$theid] . "</td>";
+									echo "<td>" . $cucmphonedescar[$theid] . "</td>";
+									echo "<td>" . $cucmphoneuserar[$theid] . "</td>";
+									echo "<td>";
+									foreach($cucmphoneextar[$theid] as $cucmext){
+										echo "$cucmext<br />";
+									}
+									echo "</td>";
 								}
 								echo "</tr>\n";
 								/*
