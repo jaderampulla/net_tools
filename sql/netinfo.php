@@ -364,7 +364,7 @@
 									}
 									$ifconfstring="ifconfig | grep -e \"Link encap\" -e \"inet addr\"";
 									$ifconf=shell_exec($ifconfstring);
-									$ifconftempar=split("\n",$ifconf);
+									$ifconftempar=preg_split('/\n/',$ifconf);
 									$last="";
 									foreach($ifconftempar as $ifconfline){
 										if(strstr($ifconfline,'Link encap')){
@@ -1027,7 +1027,7 @@
 					//Remove ] at the end of the MAC address
 					$macadd=preg_replace('/]/','',$macadd);
 					//Convert 0:b:ab:7 to 00:0b:ab:07
-					$octet=split(":",$macadd);
+					$octet=preg_split('/:/',$macadd);
 					$macadd="";
 					foreach($octet as $oct) {
 						if(strlen($oct)==1) $oct="0" . $oct;
@@ -1050,7 +1050,7 @@
 					//Remove ] at the end of the MAC address
 					$macadd=preg_replace('/]/','',$macadd);
 					//Convert 0:b:ab:7 to 00:0b:ab:07
-					$octet=split(":",$macadd);
+					$octet=preg_split('/:/',$macadd);
 					$macadd="";
 					foreach($octet as $oct) {
 						if(strlen($oct)==1) $oct="0" . $oct;
@@ -1097,7 +1097,7 @@
 					list($junk,$remain)=explode('.',$remain,2);
 					list($junk,$val)=explode('.',$remain,2);
 					//Convert 0:b:ab:7 to 00:0b:ab:07
-					$octet=split(":",$id);
+					$octet=preg_split('/:/',$id);
 					$id="";
 					foreach($octet as $oct) {
 						if(strlen($oct)==1) $oct="0" . $oct;
@@ -1416,12 +1416,12 @@
 			if($_POST['ignoreping']){
 				$ignoreping=true;
 			} else {
-				$nmapstring="nmap -PO -sP -PE -n --open -v $theip | grep \"scan report\" | grep -v \"host down\" | sed 's/Nmap scan report for //g'";
+				$nmapstring="nmap -PO -sn -PE -n --open -v $theip | grep \"scan report\" | grep -v \"host down\" | sed 's/Nmap scan report for //g'";
 				if($_POST['debug'] && $_POST['debugcommands']){
 					echo "<font style=\"color: purple;\"><b>COMMAND:</b> $nmapstring</font><br />";
 				}
 				$testip=shell_exec($nmapstring);
-				$nmaprouterstring="nmap -PO -sP -PE -n --open -v $routerip | grep \"scan report\" | grep -v \"host down\" | sed 's/Nmap scan report for //g'";
+				$nmaprouterstring="nmap -PO -sn -PE -n --open -v $routerip | grep \"scan report\" | grep -v \"host down\" | sed 's/Nmap scan report for //g'";
 				if($_POST['debug'] && $_POST['debugcommands']){
 					echo "<font style=\"color: purple;\"><b>COMMAND:</b> $nmaprouterstring</font><br />";
 				}
@@ -1446,10 +1446,10 @@
 					$devheaderar[]='Value';
 					//Get system info
 					//Replace multiple spaces with a single space: http://stackoverflow.com/questions/2368539/php-replacing-multiple-spaces-with-a-single-space
-					$sysdescr=preg_replace('!\s+!', ' ',StandardSNMPGet($theip,$snmpversion,$snmpcommstring,"SNMPv2-MIB::sysDescr.0",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass));
-					$syscontact=StandardSNMPGet($theip,$snmpversion,$snmpcommstring,"SNMPv2-MIB::sysContact.0",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
-					$syslocation=StandardSNMPGet($theip,$snmpversion,$snmpcommstring,"SNMPv2-MIB::sysLocation.0",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
-					$sysuptime=StandardSNMPGet($theip,$snmpversion,$snmpcommstring,"DISMAN-EVENT-MIB::sysUpTimeInstance",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,"-O v");
+					$sysdescr=preg_replace('!\s+!', ' ',StandardSNMPGet($theip,$snmpversion,$snmpcommstring,"SNMPv2-MIB::sysDescr.0",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null));
+					$syscontact=StandardSNMPGet($theip,$snmpversion,$snmpcommstring,"SNMPv2-MIB::sysContact.0",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
+					$syslocation=StandardSNMPGet($theip,$snmpversion,$snmpcommstring,"SNMPv2-MIB::sysLocation.0",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
+					$sysuptime=StandardSNMPGet($theip,$snmpversion,$snmpcommstring,"DISMAN-EVENT-MIB::sysUpTimeInstance",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,"-O v",null);
 					//Add system info to array for Excel export
 					$devdataar[]=array('System Name:',$testsnmp);
 					$devdataar[]=array('System Description:',$sysdescr);
@@ -1465,7 +1465,7 @@
 					//Add system table to Excel Array for multi-table printout format
 					$excelar[]=array($devheaderar,$devdataar);
 					//Get all the necessary interface info
-					$ifdescartemp=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifDescr",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+					$ifdescartemp=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifDescr",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 					//Hide SNMP interface ID's
 					if($_POST['hideintid'] && $_POST['hideintidval']){
 						unset($ifdescartemptemp);
@@ -1556,45 +1556,45 @@
 					}
 					if($_POST['debug'] && $_POST['debugoutput']){
 						echo "<pre><font style=\"color: red;\">"; print_r($ifdescar); echo "</font></pre>";
-					}//$ifnamear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifName",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+					}//$ifnamear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifName",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 					if(!$_POST['hidealias']){
-						$ifaliasar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifAlias",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ifaliasar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifAlias",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ifaliasar); echo "</font></pre>";
 						}
 					}
-					$ifinoctetsar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifInOctets",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+					$ifinoctetsar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifInOctets",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 					if($_POST['debug'] && $_POST['debugoutput']){
 						echo "<pre><font style=\"color: red;\">"; print_r($ifinoctetsar); echo "</font></pre>";
 					}
-					$ifoutoctetsar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifOutOctets",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+					$ifoutoctetsar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifOutOctets",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 					if($_POST['debug'] && $_POST['debugoutput']){
 						echo "<pre><font style=\"color: red;\">"; print_r($ifoutoctetsar); echo "</font></pre>";
 					}
 					if(!$_POST['hideadminstatus']){
-						$ifadminstatusar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifAdminStatus",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ifadminstatusar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifAdminStatus",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ifadminstatusar); echo "</font></pre>";
 						}
 					}
 					if(!$_POST['hideopstatus']){
-						$ifoperstatusar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifOperStatus",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ifoperstatusar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifOperStatus",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ifoperstatusar); echo "</font></pre>";
 						}
 					}
 					if(!$_POST['hidespeed']){
-						$ifspeedar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifSpeed",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ifspeedar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifSpeed",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ifspeedar); echo "</font></pre>";
 						}
 					}
 					if(!$_POST['hideduplex']){
-						$ifduplexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::transmission.7.2.1.19",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ifduplexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::transmission.7.2.1.19",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						//Check for a different method of getting the duplex stats
 						if(count($ifspeedar)>=10 && count($ifduplexar)<=10){
 							unset($ifduplexar);
-							$ifduplexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::transmission.7.2.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$ifduplexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::transmission.7.2.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							//The alternative method didn't work either
 							if(count($ifspeedar)>=10 && count($ifduplexar)<=10){
 								unset($ifduplexar);
@@ -1610,7 +1610,7 @@
 					if($_POST['vlanchooser'] && $_POST['vlanchoice']=="cisco"){
 						//VLAN MIB here: https://supportforums.cisco.com/thread/164782
 						//SNMPv2-SMI::enterprises.9.9.68.1.2.2.1.2
-						$ciscovlanar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.68.1.2.2.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ciscovlanar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.68.1.2.2.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ciscovlanar); echo "</font></pre>";
 						}
@@ -1618,20 +1618,20 @@
 						Complete answer:	http://blog.glinskiy.com/2010/06/monitoring-trunk-status-via-snmp.html
 						Old answer:			https://supportforums.cisco.com/thread/179460
 						*/
-						$ciscotrunkstatear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.13",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ciscotrunkstatear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.13",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ciscotrunkstatear); echo "</font></pre>";
 						}
-						$ciscotaggingar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ciscotaggingar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ciscotaggingar); echo "</font></pre>";
 						}
 						if($_POST['vlanextra']){
-							$vlanstatusar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$vlanstatusar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($vlanstatusar); echo "</font></pre>";
 							}
-							$vlannamear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$vlannamear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.4.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($vlannamear); echo "</font></pre>";
 							}
@@ -1651,7 +1651,7 @@
 								$lastvlan=$vlan;
 							}
 							//L3 VLAN IP
-							$l3vlanaddrartemp=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IP-MIB::ipAdEntIfIndex",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$l3vlanaddrartemp=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IP-MIB::ipAdEntIfIndex",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							ksort($l3vlanaddrartemp);
 							//Map ifdesc ID to VLAN number
 							if(!$_POST['hidevlanint']){
@@ -1667,7 +1667,7 @@
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($l3vlanaddrar); echo "</font></pre>";
 							}
-							$ciscol3vlanmasktmpar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IP-MIB::ipAdEntNetMask",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$ciscol3vlanmasktmpar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IP-MIB::ipAdEntNetMask",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							//Key the subnet mask by the VLAN
 							foreach($ciscol3vlanmasktmpar as $ip=>$mask){
 								$l3vlanmaskar[array_search($ip,$l3vlanaddrar)]=$mask;
@@ -1681,38 +1681,38 @@
 					if($_POST['vlanchooser'] && $_POST['vlanchoice']=="avaya"){
 						//Great info here under RC-VLAN-MIB: http://www.mibdepot.com/cgi-bin/vendor_index.cgi?r=avaya
 						//Or here: http://www.mibdepot.com/cgi-bin/getmib3.cgi?win=mib_a&n=RAPID-CITY&r=avaya&f=rc.mib&t=tree&v=v2&i=0
-						$avayavlanar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.2272.1.3.3.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$avayavlanar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.2272.1.3.3.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($avayavlanar); echo "</font></pre>";
 						}
-						$avayataggingar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.2272.1.3.3.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$avayataggingar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.2272.1.3.3.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($avayataggingar); echo "</font></pre>";
 						}
-						$avayavlanmembersar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.2272.1.3.3.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$avayavlanmembersar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.2272.1.3.3.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($avayavlanmembersar); echo "</font></pre>";
 						}
 						if($_POST['vlanextra']){
-							$vlannamear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.2272.1.3.2.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$vlannamear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.2272.1.3.2.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($vlannamear); echo "</font></pre>";
 							}
-							$vlanindexidar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.2272.1.3.2.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$vlanindexidar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.2272.1.3.2.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							foreach($vlanindexidar as $vlan=>$vlanindex){
 								$vlanstatusar[$vlan]=$ifoperstatusar[$vlanindex];
 							}
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($vlanstatusar); echo "</font></pre>";
 							}
-							$l3vlanaddrtmpar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.2272.1.8.2.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$l3vlanaddrtmpar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.2272.1.8.2.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							foreach($l3vlanaddrtmpar as $id=>$l3vlanaddr){
 								$l3vlanaddrar[array_search($id,$vlanindexidar)]=$l3vlanaddr;
 							}
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($l3vlanaddrar); echo "</font></pre>";
 							}
-							$l3vlanmasktmpar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.2272.1.8.2.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$l3vlanmasktmpar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.2272.1.8.2.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							foreach($l3vlanmasktmpar as $id=>$l3mask){
 								$l3vlanmaskar[array_search($id,$vlanindexidar)]=$l3mask;
 							}
@@ -1894,8 +1894,8 @@
 					http://www.juniper.net/techpubs/en_US/junos12.1/information-products/topic-collections/nce/snmp-ex-vlan-retrieving/snmp-ex-vlan-retrieving.pdf
 					*/
 					if($_POST['vlanchooser'] && $_POST['vlanchoice']=="juniper"){
-						$junipervlanidar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
-						$junipervlantaggingar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.2636.3.40.1.5.1.7.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$junipervlanidar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
+						$junipervlantaggingar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.2636.3.40.1.5.1.7.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						//Use VLAN tagging info to create a tagged port array and untagged port array
 						foreach($junipervlantaggingar as $intid=>$vlanar){
 							foreach($vlanar as $vlanid=>$tagging){
@@ -1930,14 +1930,14 @@
 					http://www.snmplink.org/cgi-bin/nd/m/Ent/N/Netgear,%20Inc/%5BE.%5D%20Netgear,%20Inc/Switch/NMS200/700%20Smart%20Switch%20%28Broadcom%20FASTPATH%29/NETGEAR-SMARTSWITCH-MIB
 					*/
 					if($_POST['vlanchooser'] && $_POST['vlanchoice']=="netgear"){
-						$netgearvlanar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"Q-BRIDGE-MIB::dot1qPvid",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$netgearvlanar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"Q-BRIDGE-MIB::dot1qPvid",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($netgearvlanar); echo "</font></pre>";
 						}
 						//Get all VLAN port memberships into binary format
-						$netgearbinar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.4526.11.13.1.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$netgearbinar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.4526.11.13.1.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						//Get VLAN port untagged memberships into binary format
-						$untaggednetgearbinar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.4526.11.13.1.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$untaggednetgearbinar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.4526.11.13.1.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						//Map binary array to port VLAN membership
 						foreach($ifdescar as $tmpvalid=>$ifdesctmpval){
 							foreach($untaggednetgearbinar as $vlan=>$memberar){
@@ -1988,12 +1988,12 @@
 					if($_POST['vlanchooser'] && $_POST['vlanchoice']=="h3c"){
 						//1.3.6.1.2.1.17.7.1.4.5 - dot1qPvid tree http://tools.cisco.com/Support/SNMP/do/BrowseOID.do?local=en&translate=Translate&objectInput=1.3.6.1.2.1.17.7.1.4.5.1.1
 						//1.3.6.1.2.1.17.7.1.4.5.1.1 - Pvid
-						$hpvlanar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"Q-BRIDGE-MIB::dot1qPvid",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$hpvlanar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"Q-BRIDGE-MIB::dot1qPvid",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($hpvlanar); echo "</font></pre>";
 						}
 						//VLAN port membership
-						$h3cbinar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.2.1.17.7.1.4.3.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$h3cbinar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.2.1.17.7.1.4.3.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						/*
 						H3C puts their VLAN membership in binary status like this
 						
@@ -2096,23 +2096,23 @@
 					if($_POST['clientmac'] || $_POST['clientarp']){
 						//Alternative SNMP method
 						if($_POST['macchoice']=="alt"){
-							list($ifindextomacar,$macvlanar)=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"Q-BRIDGE-MIB::dot1qTpFdbPort",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							list($ifindextomacar,$macvlanar)=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"Q-BRIDGE-MIB::dot1qTpFdbPort",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($ifindextomacar); echo "</font></pre>";
 							}
 						} else if($_POST['macchoice']=="cisco"){
 							//http://www.cisco.com/c/en/us/support/docs/ip/simple-network-management-protocol-snmp/40367-camsnmp40367.html
 							//Get list of active VLAN's on switch
-							$vlanstatusar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$vlanstatusar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.46.1.3.1.1.2.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							//Loop through each VLAN and grab the MAC address table
 							foreach($vlanstatusar as $vlan=>$status){
 								//Don't include VLAN's 1002 (fddi-default), 1003 (token-ring-default), 1004 (fddinet-default), 1005 (trnet-default)
 								if($vlan!=1002 && $vlan!=1003 && $vlan!=1004 && $vlan!=1005){
 									//echo "VLAN: '$vlan'<br />\n";
 									//Grab the MAC address table for the current VLAN
-									list($macartemp,$macvlanartemp)=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"BRIDGE-MIB::dot1dTpFdbPort",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,$vlan);
+									list($macartemp,$macvlanartemp)=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"BRIDGE-MIB::dot1dTpFdbPort",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,$vlan,null);
 									//The ID from the MAC address table (For each VLAN) has to be mapped to the interface index...STUPID CISCO!...more excessive SNMP walks!
-									$tmpintindexmapar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.2.1.17.1.4.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,$vlan);
+									$tmpintindexmapar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.2.1.17.1.4.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,$vlan,null);
 									//Add the MAC addresses from each VLAN to the final array (Ports can have MAC addresses in multiple VLAN's)
 									foreach($macartemp as $id=>$tempar){
 										foreach($tempar as $tmpmac){
@@ -2133,11 +2133,11 @@
 								}
 							}
 						} else if($_POST['macchoice']=="extreme"){
-							$ifindextomacindexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.1916.1.16.4.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$ifindextomacindexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.1916.1.16.4.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($ifindextomacindexar); echo "</font></pre>";
 							}
-							list($ifmacindextomacaddar,$tmpmacvlanar)=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.1916.1.16.4.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							list($ifmacindextomacaddar,$tmpmacvlanar)=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.1916.1.16.4.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($ifmacindextomacaddar); echo "</font></pre>";
 							}
@@ -2152,7 +2152,7 @@
 									}
 								}
 							}
-							$vlanidar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.1916.1.2.1.2.1.10",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$vlanidar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.1916.1.2.1.2.1.10",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($vlanidar); echo "</font></pre>";
 							}
@@ -2161,11 +2161,11 @@
 								$macvlanar[$ifmacindextomacaddar[$macid]]=$vlanidar[$vlanid];
 							}
 						} else {
-							$ifindextomacindexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.17.4.3.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$ifindextomacindexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.17.4.3.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($ifindextomacindexar); echo "</font></pre>";
 							}
-							$ifmacindextomacaddar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.17.4.3.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$ifmacindextomacaddar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.17.4.3.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($ifmacindextomacaddar); echo "</font></pre>";
 							}
@@ -2174,7 +2174,7 @@
 							http://people.csse.uwa.edu.au/ryan/tech/findmac.php.txt
 							http://people.csse.uwa.edu.au/ryan/tech/mac_addresses.html
 							*/
-							$ifmacindexmapar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.17.1.4.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$ifmacindexmapar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.17.1.4.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($ifmacindexmapar); echo "</font></pre>";
 							}
@@ -2218,11 +2218,11 @@
 							}
 							//Standard way didn't work, try the H3C way
 							if(count($ifindextomacindexar)<=2 && count($ifmacindextomacaddar)<=2){
-								$ifindextomacindexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.25506.8.35.3.1.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+								$ifindextomacindexar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.25506.8.35.3.1.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 								if($_POST['debug'] && $_POST['debugoutput']){
 									echo "<pre><font style=\"color: red;\">"; print_r($ifindextomacindexar); echo "</font></pre>";
 								}
-								$ifmacindextomacaddar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.25506.8.35.3.1.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+								$ifmacindextomacaddar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.25506.8.35.3.1.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 								if($_POST['debug'] && $_POST['debugoutput']){
 									echo "<pre><font style=\"color: red;\">"; print_r($ifmacindextomacaddar); echo "</font></pre>";
 								}
@@ -2250,7 +2250,7 @@
 						}
 					}
 					if($_POST['hidemacciscotrunk']){
-						$ciscotrunkar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ciscotrunkar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.46.1.6.1.1.14",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						//echo "<pre><font style=\"color: red;\">"; print_r($ciscotrunkar); echo "</font></pre>";
 						foreach($ciscotrunkar as $theid=>$trunkval){
 							if($trunkval=="Trunk"){
@@ -2276,7 +2276,7 @@
 								list($macregistry,$macoui,$macorg)=explode(',',$macouiline);
 								if($macregistry!="Registry"){
 									//Lazy coding to use existing function fixmac and convert E043DB to E0:43:DB
-									$macoui=preg_replace('/:00:00:00/','',fixmac(trim($macoui)."000000"));
+									$macoui=wordwrap($macoui,2,':',true);
 									$macorg=trim(preg_replace('/"/','',$macorg));
 									$macouiar[$macoui]=$macorg;
 								}
@@ -2320,7 +2320,7 @@
 							echo "<br />The router IP address '$routerip' is up but not responsive to SNMP queries with RO community string you entered.<br /><font style=\"color: red;\">The ARP table is unavailable.</font><br /><br />\n";
 						} else if(strlen($testroutersnmp)>0){
 							//Get arp table via SNMP
-							$arpar=StandardSNMPWalk($routerip,$snmpversion,$snmpcommstring,"IP-MIB::ipNetToMediaPhysAddress",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$arpar=StandardSNMPWalk($routerip,$snmpversion,$snmpcommstring,"IP-MIB::ipNetToMediaPhysAddress",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							if($_POST['debug'] && $_POST['debugoutput']){
 								echo "<pre><font style=\"color: red;\">"; print_r($arpar); echo "</font></pre>";
 							}
@@ -2331,9 +2331,9 @@
 							}
 						}
 					} else if($_POST['arpchoice']=="nmap"){
-						$nmapstring="sudo nmap -PO -sP -PE -n --open {$_POST['nmaparp']} | grep -e \"scan report\" -e \"MAC Address\" | grep -v \"host down\" | sed 's/Nmap scan report for //g' | sed 's/MAC Address: //g'";
+						$nmapstring="sudo nmap -PO -sn -PE -n --open {$_POST['nmaparp']} | grep -e \"scan report\" -e \"MAC Address\" | grep -v \"host down\" | sed 's/Nmap scan report for //g' | sed 's/MAC Address: //g'";
 						$nmaparptempar=shell_exec($nmapstring);
-						$nmaparptempar=split("\n",$nmaparptempar);
+						$nmaparptempar=preg_split('/\n/',$nmaparptempar);
 						$last="";
 						foreach($nmaparptempar as $line){
 							if(strstr($line,':')){
@@ -2358,73 +2358,73 @@
 						echo "<font style=\"color: red;\">The router was not reachable through ICMP. Trying to ignore the ping test</font><br /><br />";
 					}
 					if($_POST['trafficstats']){
-						$ifinoctetsar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifInOctets",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ifinoctetsar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifInOctets",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ifinoctetsar); echo "</font></pre>";
 						}
-						$ifoutoctetsar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifOutOctets",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ifoutoctetsar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifOutOctets",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ifoutoctetsar); echo "</font></pre>";
 						}
 					}
 					if($_POST['errorsdiscard']){
-						$ifinerrorsar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifInErrors",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ifinerrorsar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifInErrors",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ifinerrorsar); echo "</font></pre>";
 						}
-						$ifouterrorsar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifOutErrors",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ifouterrorsar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifOutErrors",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ifouterrorsar); echo "</font></pre>";
 						}
-						$ifindiscardsar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifInDiscards",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ifindiscardsar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifInDiscards",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ifindiscardsar); echo "</font></pre>";
 						}
-						$ifoutdiscardsar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifOutDiscards",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ifoutdiscardsar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"IF-MIB::ifOutDiscards",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ifoutdiscardsar); echo "</font></pre>";
 						}
 					}
 					if($_POST['ciscopps']){
-						$ciscoppsinar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.9.2.2.1.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ciscoppsinar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.9.2.2.1.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ciscoppsinar); echo "</font></pre>";
 						}
-						$ciscoppsoutar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.9.2.2.1.1.9",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ciscoppsoutar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.9.2.2.1.1.9",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ciscoppsoutar); echo "</font></pre>";
 						}
 					}
 					if($_POST['ciscoinoutrate']){
-						$ciscoinratear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.9.2.2.1.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ciscoinratear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.9.2.2.1.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ciscoinratear); echo "</font></pre>";
 						}
-						$ciscooutratear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.9.2.2.1.1.8",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$ciscooutratear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.9.2.2.1.1.8",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($ciscooutratear); echo "</font></pre>";
 						}
 					}
 					if($_POST['cdpname']){
-						$cdpnamear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$cdpnamear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($cdpnamear); echo "</font></pre>";
 						}
 					}
 					if($_POST['cdpip']){
-						$cdpipar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$cdpipar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($cdpipar); echo "</font></pre>";
 						}
 					}
 					if($_POST['cdpdev']){
-						$cdpdevar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.8",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$cdpdevar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.8",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($cdpdevar); echo "</font></pre>";
 						}
 					}
 					if($_POST['cdpint']){
-						$cdpintar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$cdpintar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.23.1.2.1.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($cdpintar); echo "</font></pre>";
 						}
@@ -2450,41 +2450,41 @@
 						return $inar;
 					}
 					if($_POST['lldpname']){
-						$lldpnamear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.0.8802.1.1.2.1.4.1.1.9",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$lldpnamear=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.0.8802.1.1.2.1.4.1.1.9",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						$lldpnamear=LLDPIDChecker($lldpnamear,$ifdescar);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($lldpnamear); echo "</font></pre>";
 						}
 					}
 					if($_POST['lldpip']){
-						$lldpipar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.0.8802.1.1.2.1.4.1.1.5",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$lldpipar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.0.8802.1.1.2.1.4.1.1.5",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						$lldpipar=LLDPIDChecker($lldpipar,$ifdescar);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($lldpipar); echo "</font></pre>";
 						}
 					}
 					if($_POST['lldpdev']){
-						$lldpdevar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.0.8802.1.1.2.1.4.1.1.10",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$lldpdevar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.0.8802.1.1.2.1.4.1.1.10",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						$lldpdevar=LLDPIDChecker($lldpdevar,$ifdescar);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($lldpdevar); echo "</font></pre>";
 						}
 					}
 					if($_POST['lldpint']){
-						$lldpintar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.0.8802.1.1.2.1.4.1.1.8",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$lldpintar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.0.8802.1.1.2.1.4.1.1.8",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						$lldpintar=LLDPIDChecker($lldpintar,$ifdescar);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($lldpintar); echo "</font></pre>";
 						}
 					}
 					if($_POST['edpdev']){
-						$edpdevar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.1916.1.13.2.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$edpdevar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.1916.1.13.2.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($edpdevar); echo "</font></pre>";
 						}
 					}
 					if($_POST['edpint']){
-						$edpintar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.1916.1.13.2.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$edpintar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.4.1.1916.1.13.2.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						if($_POST['debug'] && $_POST['debugoutput']){
 							echo "<pre><font style=\"color: red;\">"; print_r($edpintar); echo "</font></pre>";
 						}
@@ -2492,12 +2492,12 @@
 					//Good article on total switch power - http://forum.nedi.ch/index.php?topic=600.0
 					if($_POST['ciscointpoe'] || $_POST['ciscointpoedev']){
 						//Grab entPhysicalAlias ID's
-						$entPhysicalAliasar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.2.1.47.1.1.1.1.14",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$entPhysicalAliasar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"1.3.6.1.2.1.47.1.1.1.1.14",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						//Check if the array has any values for PoE interface ID to ifDescr ID. If not, need to use alternate method to get 
 						$poeidcheck=true;
 						if(count(array_filter($entPhysicalAliasar))==0){
 							$poeidcheck=false;
-							$ifpoeidtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.47.1.1.1.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$ifpoeidtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.47.1.1.1.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							foreach($ifpoeidtempar as $tempid=>$intname){
 								if(in_array($intname,$ifdescar)){
 									//Mash arrays together...identify PoE interface ID to ifDescr interface ID
@@ -2505,10 +2505,10 @@
 								}
 							}
 						}
-						$poeswitchnumar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.402.1.3.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+						$poeswitchnumar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.402.1.3.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 						foreach($poeswitchnumar as $switchnum=>$junkid){
 							//Grab mapping of PoE MIB interface ID to entPhysicalAlias ID for each switch
-							$ciscointpoeidtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.$switchnum",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$ciscointpoeidtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.402.1.2.1.11.$switchnum",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							foreach($ciscointpoeidtempar as $intpoeid=>$intpoe){
 								$ciscointpoeidar[$switchnum][$intpoeid]=$intpoe;
 							}
@@ -2520,14 +2520,14 @@
 							unset($ciscointpoeavailtempar);
 							//Grab PoE interface stats for available PoE power on each port (Organized by an ID within the PoE MIB)
 							//Used to use .1.2.1.7 but changed to .1.2.1.8....7 shows power from power supply and 8 shows power sent to device
-							$ciscointpoeavailtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.402.1.2.1.8.$switchnum",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$ciscointpoeavailtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.402.1.2.1.8.$switchnum",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							//Create array for current switch
 							foreach($ciscointpoeavailtempar as $availid=>$avail){
 								$ciscointpoeavailar[$switchnum][$availid]=$avail;
 							}
 							unset($ciscointpoeactualtempar);
 							//Grab PoE interface stats for actual used PoE power on each port (Organized by an ID within the PoE MIB)
-							$ciscointpoeactualtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.402.1.2.1.10.$switchnum",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$ciscointpoeactualtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::enterprises.9.9.402.1.2.1.10.$switchnum",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							//Create array for current switch
 							foreach($ciscointpoeactualtempar as $actualid=>$actual){
 								$ciscointpoeactualar[$switchnum][$actualid]=$actual;
@@ -2562,7 +2562,7 @@
 						foreach($poeswitchnumar as $switchnum=>$junkid){
 							unset($ciscointpoedevar);
 							//Grab PoE device on each port (Organized by an ID within the PoE MIB)
-							$ciscointpoedevtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.105.1.1.1.9.$switchnum",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+							$ciscointpoedevtempar=StandardSNMPWalk($theip,$snmpversion,$snmpcommstring,"SNMPv2-SMI::mib-2.105.1.1.1.9.$switchnum",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 							foreach($ciscointpoedevtempar as $devid=>$dev){
 								$ciscointpoedevar[$switchnum][$devid]=$dev;
 							}
@@ -2655,7 +2655,7 @@
 												echo "<b>Cisco CME Ephones on $theip:</b> $ephonesonswitch<br /><br />\n";
 												//Only get phone info if there are phones on the switch
 												if($ephonesonswitch>0){
-													$cmesepidar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.2.6.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$cmesepidar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.2.6.1.1",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 													if($usecdpforsep==true){
 														foreach($cdpnamear as $cdpid=>$cdpname){
 															if(substr($cdpname,0,3)=="SEP"){
@@ -2674,7 +2674,7 @@
 													if($_POST['debug'] && $_POST['debugoutput']){
 														echo "<pre><font style=\"color: red;\">"; print_r($cmesepidtosepidar); echo "</font></pre>";
 													}
-													$cmephoneipstempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.43.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$cmephoneipstempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.43.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 													foreach($cmephoneipstempar as $phoneipsepid=>$phoneip){
 														if($phoneip && $phoneip!='0.0.0.0' && array_search($phoneipsepid,$cmesepidtosepidar)!=0){
 															$cmephoneipsar[array_search($phoneipsepid,$cmesepidtosepidar)]=$phoneip;
@@ -2683,7 +2683,7 @@
 													if($_POST['debug'] && $_POST['debugoutput']){
 														echo "<pre><font style=\"color: red;\">"; print_r($cmephoneipsar); echo "</font></pre>";
 													}
-													$cmephonemodeltempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.43.1.5",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$cmephonemodeltempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.43.1.5",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 													foreach($cmephonemodeltempar as $phonemodelsepid=>$phonemodel){
 														if($phonemodel && array_search($phonemodelsepid,$cmesepidtosepidar)!=0){
 															$cmephonemodelar[array_search($phonemodelsepid,$cmesepidtosepidar)]=$phonemodel;
@@ -2692,7 +2692,7 @@
 													if($_POST['debug'] && $_POST['debugoutput']){
 														echo "<pre><font style=\"color: red;\">"; print_r($cmephonemodelar); echo "</font></pre>";
 													}
-													$cmephonestatustempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.2.6.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$cmephonestatustempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.2.6.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 													foreach($cmephonestatustempar as $phonestatussepid=>$phonestatus){
 														if($phonestatus && array_search($phonestatussepid,$cmesepidtosepidar)!=0){
 															if($phonestatus=="1"){
@@ -2710,11 +2710,11 @@
 													if($_POST['debug'] && $_POST['debugoutput']){
 														echo "<pre><font style=\"color: red;\">"; print_r($cmephonestatusar); echo "</font></pre>";
 													}
-													$cmednar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.47.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$cmednar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.47.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 													if($_POST['debug'] && $_POST['debugoutput']){
 														echo "<pre><font style=\"color: red;\">"; print_r($cmednar); echo "</font></pre>";
 													}
-													$cmebuttonlayouttempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.46.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$cmebuttonlayouttempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.46.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 													foreach($cmebuttonlayouttempar as $buttonlayoutid=>$buttonlayout){
 														if(substr($buttonlayout,-1)=="."){
 															$buttonlayout=rtrim($buttonlayout,".");
@@ -2733,7 +2733,7 @@
 													if($_POST['debug'] && $_POST['debugoutput']){
 														echo "<pre><font style=\"color: red;\">"; print_r($cmebuttonlayoutar); echo "</font></pre>";
 													}
-													$cmednlabeltempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.47.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$cmednlabeltempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.47.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 													//Loop through button layout and create arrays for each port matching the DN label
 													foreach($cmebuttonlayoutar as $intid=>$tmpbuttonlayoutar){
 														foreach($tmpbuttonlayoutar as $labelid=>$unused){
@@ -2743,7 +2743,7 @@
 													if($_POST['debug'] && $_POST['debugoutput']){
 														echo "<pre><font style=\"color: red;\">"; print_r($cmednlabelar); echo "</font></pre>";
 													}
-													$cmednnametempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.47.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$cmednnametempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.439.1.1.47.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 													//Loop through button layout and create arrays for each port matching the DN label
 													foreach($cmebuttonlayoutar as $intid=>$tmpbuttonlayoutar){
 														foreach($tmpbuttonlayoutar as $nameid=>$unused){
@@ -2788,7 +2788,7 @@
 														}
 													}
 												}
-												$cucmsepidar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.20",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+												$cucmsepidar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.20",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 												echo "<b>Cisco CUCM Phones Configured:</b> " . count($cucmsepidar) . "<br />\n";
 												if($usecdpforsep==true){
 													foreach($cdpnamear as $cdpid=>$cdpname){
@@ -2807,7 +2807,7 @@
 												}
 												//Only get phone info if there are phones on the switch
 												if($ephonesonswitch>0){
-													$cucmphoneipstempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$cucmphoneipstempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.6",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 													foreach($cucmphoneipstempar as $phoneipsepid=>$phoneip){
 														if($phoneip && $phoneip!='0.0.0.0' && array_search($phoneipsepid,$cucmsepidtosepidar)!=0){
 															$cucmphoneipsar[array_search($phoneipsepid,$cucmsepidtosepidar)]=$phoneip;
@@ -2816,8 +2816,8 @@
 													if($_POST['debug'] && $_POST['debugoutput']){
 														echo "<pre><font style=\"color: red;\">"; print_r($cucmphoneipsar); echo "</font></pre>";
 													}
-													$cucmphonemodelidar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.18",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
-													$cucmphonemodeldevicear=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.1.8.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$cucmphonemodelidar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.18",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
+													$cucmphonemodeldevicear=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.1.8.1.3",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 													//Merge SEP ID to model ID array with model ID to actual model and finally tie all that to a physical port
 													foreach($cucmphonemodelidar as $phonemodelsepid=>$phonemodel){
 														if($phonemodel && array_search($phonemodelsepid,$cucmsepidtosepidar)!=0){
@@ -2827,7 +2827,7 @@
 													if($_POST['debug'] && $_POST['debugoutput']){
 														echo "<pre><font style=\"color: red;\">"; print_r($cucmphonemodelar); echo "</font></pre>";
 													}
-													$cucmphoneprototempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.19",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$cucmphoneprototempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.19",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 													foreach($cucmphoneprototempar as $phoneprotosepid=>$phoneproto){
 														if($phoneproto && array_search($phoneprotosepid,$cucmsepidtosepidar)!=0){
 															$cucmphoneprotoar[array_search($phoneprotosepid,$cucmsepidtosepidar)]=$phoneproto;
@@ -2836,7 +2836,7 @@
 													if($_POST['debug'] && $_POST['debugoutput']){
 														echo "<pre><font style=\"color: red;\">"; print_r($cucmphoneprotoar); echo "</font></pre>";
 													}
-													$cucmphonestatustempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$cucmphonestatustempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.7",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 													$registeredphones=0;
 													foreach($cucmphonestatustempar as $phonestatussepid=>$phonestatus){
 														if($phonestatus=="Registered"){
@@ -2851,7 +2851,7 @@
 													if($_POST['debug'] && $_POST['debugoutput']){
 														echo "<pre><font style=\"color: red;\">"; print_r($cucmphonestatusar); echo "</font></pre>";
 													}
-													$cucmphonedesctempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$cucmphonedesctempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.4",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 													foreach($cucmphonedesctempar as $phonedescsepid=>$phonedesc){
 														if($phonedesc && array_search($phonedescsepid,$cucmsepidtosepidar)!=0){
 															$cucmphonedescar[array_search($phonedescsepid,$cucmsepidtosepidar)]=$phonedesc;
@@ -2860,7 +2860,7 @@
 													if($_POST['debug'] && $_POST['debugoutput']){
 														echo "<pre><font style=\"color: red;\">"; print_r($cucmphonedescar); echo "</font></pre>";
 													}
-													$cucmphoneusertempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.5",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$cucmphoneusertempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.1.1.5",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 													foreach($cucmphoneusertempar as $phoneusersepid=>$phoneuser){
 														if($phoneuser && array_search($phoneusersepid,$cucmsepidtosepidar)!=0){
 															$cucmphoneuserar[array_search($phoneusersepid,$cucmsepidtosepidar)]=$phoneuser;
@@ -2869,7 +2869,7 @@
 													if($_POST['debug'] && $_POST['debugoutput']){
 														echo "<pre><font style=\"color: red;\">"; print_r($cucmphoneuserar); echo "</font></pre>";
 													}
-													$cucmphoneexttempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.5.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass);
+													$cucmphoneexttempar=StandardSNMPWalk($ciscovoiceip,$snmpversionciscovoice,$snmpstringciscovoice,"1.3.6.1.4.1.9.9.156.1.2.5.1.2",$snmpv3user,$snmpv3authproto,$snmpv3authpass,$snmpv3seclevel,$snmpv3privproto,$snmpv3privpass,null,null);
 													//Create phone extension array based on interface ID
 													foreach($cucmphoneexttempar as $phoneextsepid=>$phoneextar){
 														if(array_search($phoneextsepid,$cucmsepidtosepidar)!=0){
