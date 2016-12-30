@@ -9,10 +9,12 @@ function sql2table ($sql,$db,$hide) {
 	}
 	$found=mysqli_num_rows($result);
 	$fields=mysqli_num_fields($result);
-	if(($result==TRUE) && (strncasecmp($sql,"select",6)!=0)){
-		echo "Rows: ".mysqli_affected_rows()."\n";
+	if($result->field_count>0 && $result->num_rows>0 && preg_match("/^\s*select/i",$sql)==1){
+		echo "Rows: ".$result->num_rows."\n";
+	}else if($result->field_count>0 && $result->num_rows==0){
+		echo "Rows: 0\n";
 	} else {
-		echo "Rows: ".$found."\n";
+		echo "Rows: ".$db->affected_rows."\n";
 	}
 	echo "<table border=1 align=center>"."\r\n<tr>";
 	$headerar=array();
