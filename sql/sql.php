@@ -6,7 +6,6 @@
 	require ("../include/functions.php");
 	require("../include/mysql.php");
 	$time_start=microtime_float();
-	set_magic_quotes_runtime(0);
 	$sql=${"sql"};
 	$qt=chr(34);
 	$sqt=chr(92).chr(34);
@@ -54,10 +53,10 @@
 	function showerror(){
 		echo mysql_error();
 	}
-	//Connect to database
-	$db=mysql_connect($DBHost,$UserName,$Password) or die("<br /><b>Could not connect because of bad username, password, and or service not available</b>");
 	//Default selected database
 	$dbase=$_REQUEST[Database]; if(!$dbase) $dbase="syslog";
+	//Connect to database
+	$db=mysqli_connect($DBHost,$UserName,$Password,$dbase) or die("<br /><b>Could not connect because of bad username, password, and or service not available</b>");
 	echo "<form style='display: inline;' action=\"" . htmlspecialchars($_SERVER["PHP_SELF"]) . "\" name=mymain method=post>";
 	echo "Database: ";
 	echo dropdown($db,"show databases","Database","Database",$dbase);
@@ -88,8 +87,8 @@
 	echo "</textarea>";
 	echo "</form>\n";
 	echo "<br />";
-	if($thesql=="") $thesql="show tables";
-	mysql_select_db($dbase,$db);
+	if($thesql=="") $thesql="SELECT table_name FROM information_schema.tables where table_schema='$dbase';";
+	mysqli_select_db($dbase,$db);
 	//Run the query and return arrays with the header and data
 	list($headerar,$dataar)=sql2table($thesql,$db,"");
 	$time=end_time($time_start);

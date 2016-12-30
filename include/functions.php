@@ -1,22 +1,24 @@
 <?php
 error_reporting(E_ERROR | E_WARNING | E_PARSE);
 function sql2table ($sql,$db,$hide) {
-	$result=mysql_query($sql,$db);
+	$result=mysqli_query($db,$sql);
 	if($result==FALSE){
-		echo mysql_error();
+		echo "FALSE<br />\n";
+		echo mysqli_error();
 		return;
 	}
-	$found=mysql_num_rows($result);
-	$fields=mysql_num_fields($result);
+	$found=mysqli_num_rows($result);
+	$fields=mysqli_num_fields($result);
 	if(($result==TRUE) && (strncasecmp($sql,"select",6)!=0)){
-		echo "Rows: ".mysql_affected_rows()."\n";
+		echo "Rows: ".mysqli_affected_rows()."\n";
 	} else {
 		echo "Rows: ".$found."\n";
 	}
 	echo "<table border=1 align=center>"."\r\n<tr>";
 	$headerar=array();
 	for($x=0;$x<$fields;$x++) {
-		$field[$x]=mysql_fieldname($result, $x);
+		$columnname=mysqli_fetch_field($result);
+		$field[$x]=$columnname->name;
 		if(strpos($hide,$field[$x])==0){
 			echo "<th>$field[$x]</th>";
 			//Store header titles in array for PHP to XLSX
@@ -27,7 +29,7 @@ function sql2table ($sql,$db,$hide) {
 	echo "</tr>\n";
 	$dataar=array();
 	$rowcnt=0;
-	while($row = mysql_fetch_array ($result,MYSQL_BOTH)) {
+	while($row = mysqli_fetch_array ($result,MYSQLI_BOTH)) {
 		echo "<tr>";
 		for($x=0;$x<$fields;$x++) {
 			if(!strpos($hide,$field[$x]))
@@ -55,16 +57,16 @@ function sql2table ($sql,$db,$hide) {
 		$rowcnt+=1;
 	}
 	echo "</table>";
-	mysql_free_result($result);
+	mysqli_free_result($result);
 	return array($headerar,$dataar);
 }
 
 function dropdown($dbconn,$thesql,$varname,$txtname,$selected) {
-    $rs_query=mysql_query($thesql,$dbconn);
-    $found=mysql_num_rows($rs_query);
-    $dropbox="<select name=\"$varname\">\n";
+    $rs_query=mysqli_query($dbconn,$thesql);
+	$found=mysqli_num_rows($rs_query);
+	$dropbox="<select name=\"$varname\">\n";
     for($x=0;$x<$found;$x++) {
-        $row = mysql_fetch_array ($rs_query, MYSQL_BOTH);
+        $row = mysqli_fetch_array ($rs_query, MYSQLI_BOTH);
 		if($row[$varname]!="information_schema" && $row[$varname]!="cacti" && $row[$varname]!="mysql" && $row[$varname]!="performance_schema"){
 			$dropbox=$dropbox."<option value=\"".$row[$varname]."\"";
 			if($row[$varname]==$selected) $dropbox=$dropbox." selected";
