@@ -2275,7 +2275,6 @@
 							foreach($macouifilear as $macouiline){
 								list($macregistry,$macoui,$macorg)=explode(',',$macouiline);
 								if($macregistry!="Registry"){
-									//Lazy coding to use existing function fixmac and convert E043DB to E0:43:DB
 									$macoui=wordwrap($macoui,2,':',true);
 									$macorg=trim(preg_replace('/"/','',$macorg));
 									$macouiar[$macoui]=$macorg;
