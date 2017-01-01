@@ -172,21 +172,17 @@ if($_POST['scan']){
 			if($netbios=="on"){ echo "<th>NetBIOS</th>"; }
 			if($netbiosextra=="on"){ echo "<th style=\"width: 150px;\">NetBIOS Name</th><th style=\"width: 180px;\">NetBIOS Workgroup</th><th>NetBIOS MAC Address</th>"; }
 			if($netbiosextra){
-				//Get OUI file into array
-				$macouifilear=file("oui.txt");
-				//Get lines in array that have the MAC address and associated vendor
-				foreach($macouifilear as $macouiline){
-					if(strstr($macouiline,'hex')){
-						$macouitmpar[]=$macouiline;
+				if(file("oui.csv")){
+					$macouifilear=file("oui.csv",FILE_IGNORE_NEW_LINES);
+					//Get lines in array that have the MAC address and associated vendor
+					foreach($macouifilear as $macouiline){
+						list($macregistry,$macoui,$macorg)=explode(',',$macouiline);
+						if($macregistry!="Registry"){
+							$macoui=wordwrap($macoui,2,':',true);
+							$macorg=trim(preg_replace('/"/','',$macorg));
+							$macouiar[$macoui]=$macorg;
+						}
 					}
-				}
-				//Create array keyed by MAC address with the value of the vendor
-				foreach($macouitmpar as $macouiline){
-					list($macadd,$remain)=explode('(',$macouiline);
-					$macadd=preg_replace('/-/',':',strtoupper(trim($macadd)));
-					list($junk,$vendor)=explode(')',$remain);
-					$vendor=trim($vendor);
-					$macouiar[$macadd]=$vendor;
 				}
 			}
 			if($snmp=="on"){ echo "<th>SNMP</th>"; }
@@ -257,7 +253,7 @@ if($_POST['scan']){
 					NetBIOS script obtained here:
 					http://nmap.org/nsedoc/scripts/nbstat.html
 					*/
-					$extranetbiosstring="sudo nmap -sU --script nbstat.nse -p137 $key | grep -e NetBIOS -e group | grep -v '<00>' | grep -v MSBROWSE";
+					$extranetbiosstring="sudo nmap -sU -v --script nbstat.nse -p137 $key | grep -e NetBIOS -e group | grep -v '<00>' | grep -v MSBROWSE | sed 's/.*nbstat: //'";
 					$extranetbiosar=preg_split('/\n/',shell_exec("$extranetbiosstring"));
 					foreach($extranetbiosar as $netbiosentry){
 						if($netbiosentry){
