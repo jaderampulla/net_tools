@@ -80,7 +80,7 @@ function dropdown($dbconn,$thesql,$varname,$txtname,$selected) {
 }
 
 function NmapFindIP($iprange){
-	$ipar=split("\n",`nmap -sL -n $iprange | grep -v done | grep -v Starting | sed 's/Nmap scan report for //g'`);
+	$ipar=preg_split('/\n/',`nmap -sL -n $iprange | grep -v done | grep -v Starting | sed 's/Nmap scan report for //g'`);
 	$returnar=array();
 	foreach($ipar as $ar){
 		if($ar) $returnar[]=$ar;

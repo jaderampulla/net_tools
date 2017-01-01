@@ -46,7 +46,7 @@ if($_REQUEST['showsql']){
 	$_SESSION['showsql']="";
 }
 //Find out how many IP's are created by the hostfilter. If it's too many, don't allow the start and stop buttons to appear
-$hostar=NmapFindIP(mysql_real_escape_string($_REQUEST['hostfilter']));
+$hostar=NmapFindIP($_REQUEST['hostfilter']);
 $sizeof=sizeof($hostar);
 echo "<br /><h3 style='display: inline;'>$title</h3> (<font style=\"text-align: right; color: #8B0000;\">Only 1 browser session of this page at a time</font>)<br /><br />\n";
 ?>
@@ -63,8 +63,8 @@ echo "<br /><h3 style='display: inline;'>$title</h3> (<font style=\"text-align: 
 				$thedb=$returnar[0];
 				$dbconn=$returnar[1];
 				$getdb="show databases;";
-				$getdb=mysql_query($getdb);
-				while($row=mysql_fetch_array($getdb)){
+				$getdb=mysqli_query($dbconn,$getdb);
+				while($row=mysqli_fetch_array($getdb)){
 					if($row[0]!="information_schema" && $row[0]!="cacti" && $row[0]!="mysql" && $row[0]!="performance_schema"){
 						if($row[0]==$_REQUEST['thedatabase']){
 							echo "\n<option value=\"{$row[0]}\" selected>{$row[0]}</option>";
@@ -92,9 +92,9 @@ echo "<br /><h3 style='display: inline;'>$title</h3> (<font style=\"text-align: 
 				<td>
 				<?php
 				$gettables="show tables in $thedb;";
-				$gettables=mysql_query($gettables);
+				$gettables=mysqli_query($dbconn,$gettables);
 				echo "<select name=\"thetables\">\n";
-				while($row=mysql_fetch_array($gettables)){
+				while($row=mysqli_fetch_array($gettables)){
 					$thetable=$row[0];
 					if($thetable=="logs" || $thetable=="defaultlogs"){
 						$thetable="Default Logs";

@@ -7,14 +7,15 @@ $returnar=$mysql->connect(1);
 //$thedb=$returnar[0];
 //$thedb="JadeHomeLab";
 $dbconn=$returnar[1];
-$thedb=mysql_real_escape_string($_SESSION['thedatabase']);
-$logstable=mysql_real_escape_string($_SESSION['thetables']);
-$numevents=mysql_real_escape_string($_SESSION['numevents']);
-$hostfilter=mysql_real_escape_string($_SESSION['hostfilter']);
-$levelselect=mysql_real_escape_string($_SESSION['levelselect']);
-$program=mysql_real_escape_string($_SESSION['programfilter']);
-$notprogram=mysql_real_escape_string($_SESSION['notprogram']);
-$showsql=mysql_real_escape_string($_SESSION['showsql']);
+$thedb=$_SESSION['thedatabase'];
+$logstable=$_SESSION['thetables'];
+$numevents=$_SESSION['numevents'];
+$hostfilter=$_SESSION['hostfilter'];
+$levelselect=$_SESSION['levelselect'];
+$program=$_SESSION['programfilter'];
+$notprogram=$_SESSION['notprogram'];
+$showsql=$_SESSION['showsql'];
+
 //echo "Logs table: $logstable<br />\n";
 //echo "Events: $numevents<br />\n";
 //Create the host filter
@@ -99,7 +100,7 @@ $getlogs="SELECT timestamp,facility,level,host,program,msg FROM $thedb.$logstabl
 if($showsql){
 	echo "<b>SQL:</b> $getlogs<br />\n";
 }
-$getlogs=mysql_query($getlogs);
+$getlogs=mysqli_query($dbconn,$getlogs);
 echo "<div id=\"contenttable\">\n";
 echo "<table border='1'>\n";
 echo "<tr>";
@@ -109,7 +110,7 @@ echo "<th>Host</th>";
 echo "<th>Program</th>";
 echo "<th>Message</th>";
 echo "</tr>\n";
-while($row=mysql_fetch_array($getlogs)){
+while($row=mysqli_fetch_array($getlogs)){
 	echo "<tr>";
 	echo "<td class=\"timestamp\">" . $row['timestamp'] . "</td>";
 	echo "<td style=\"min-width: 80px;\">" . $row['level'] . "</td>";
