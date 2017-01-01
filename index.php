@@ -9,7 +9,7 @@ require("include/header.php");
 <b>Written by:</b><br />
 Jade Rampulla<br />
 Network Engineer<br />
-<a target="_NEW" href="http://www.ronco.net">Ronco Communications</a>
+<a target="_NEW" href="http://www.eagleview.com">EagleView</a>
 <?php
 require("include/end.php");
 ?>
