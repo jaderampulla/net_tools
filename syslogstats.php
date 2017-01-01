@@ -34,8 +34,8 @@ $returnar=$mysql->connect(1);
 $thedb=$returnar[0];
 $dbconn=$returnar[1];
 $getdb="show databases;";
-$getdb=mysql_query($getdb);
-while($row=mysql_fetch_array($getdb)){
+$getdb=mysqli_query($dbconn,$getdb);
+while($row=mysqli_fetch_array($getdb)){
 	if($row[0]!="information_schema" && $row[0]!="cacti" && $row[0]!="mysql" && $row[0]!="performance_schema"){
 		if($row[0]==$_REQUEST['thedatabase']){
 			echo "\n<option value=\"{$row[0]}\" selected>{$row[0]}</option>";
@@ -57,11 +57,12 @@ while($row=mysql_fetch_array($getdb)){
 if($_REQUEST['debugtime']=="on") $debugtime=true;
 if($_REQUEST['showsql']=="on") $showsql=true;
 if($_REQUEST['StatsDB']){
-	$thedb=mysql_real_escape_string($_REQUEST['thedatabase']);
+	//$thedb=mysql_real_escape_string($_REQUEST['thedatabase']);
+	$thedb=$_REQUEST['thedatabase'];
 	$gettables="show tables in $thedb;";
-	$gettables=mysql_query($gettables);
+	$gettables=mysqli_query($dbconn,$gettables);
 	//Number of tables used when printing results
-	$numtables=mysql_num_rows($gettables);
+	$numtables=mysqli_num_rows($gettables);
 	//Outer table
 	if($numtables>0){
 		echo "<table>\n";
@@ -78,21 +79,21 @@ if($_REQUEST['StatsDB']){
 	$minutesum=0;
 	$secondsum=0;
 	//Loop through each table in the selected database
-	while($row=mysql_fetch_array($gettables)){
+	while($row=mysqli_fetch_array($gettables)){
 		//echo "ROW: {$row[0]}<br />\n";
 		$logstable=$row[0];
 		$gethourly="SELECT count(seq) as thecount FROM $thedb.$logstable WHERE timestamp>=DATE_SUB(NOW(),INTERVAL 1 HOUR);";
 		if($showsql==true) $hourlysql=$gethourly;
-		$gethourly=mysql_fetch_object(mysql_query($gethourly))->thecount;
+		$gethourly=mysqli_fetch_object(mysqli_query($dbconn,$gethourly))->thecount;
 		$getminute="SELECT count(seq) as thecount FROM $thedb.$logstable WHERE timestamp>=DATE_SUB(NOW(),INTERVAL 1 MINUTE);";
 		if($showsql==true) $minutesql=$getminute;
-		$getminute=mysql_fetch_object(mysql_query($getminute))->thecount;
+		$getminute=mysqli_fetch_object(mysqli_query($dbconn,$getminute))->thecount;
 		$getsecond="SELECT count(seq) as thecount FROM $thedb.$logstable WHERE timestamp>=DATE_SUB(NOW(),INTERVAL 1 SECOND);";
 		if($showsql==true) $secondsql=$getsecond;
-		$getsecond=mysql_fetch_object(mysql_query($getsecond))->thecount;
+		$getsecond=mysqli_fetch_object(mysqli_query($dbconn,$getsecond))->thecount;
 		$gettablestats="SELECT data_length,index_length FROM information_schema.TABLES WHERE table_schema='$thedb' and table_name='$logstable';";
 		if($showsql==true) $sizesql=$gettablestats;
-		$gettablestats=mysql_fetch_object(mysql_query($gettablestats));
+		$gettablestats=mysqli_fetch_object(mysqli_query($dbconn,$gettablestats));
 		
 		//If the size of the table is 700MB or larger, don't count all the entries just estimate it
 		//megabits to bits calculator http://www.matisse.net/bitcalc/
@@ -100,11 +101,11 @@ if($_REQUEST['StatsDB']){
 		if($gettablestats->data_length>=$estimatewhen){
 			$getlognum="SELECT table_rows FROM INFORMATION_SCHEMA.TABLES WHERE table_schema='$thedb' and table_name='$logstable';";
 			$totalmessagessql=$getlognum;
-			$getlognum=mysql_fetch_object(mysql_query($getlognum))->table_rows;
+			$getlognum=mysqli_fetch_object(mysqli_query($dbconn,$getlognum))->table_rows;
 		} else {
 			$getlognum="SELECT count(seq) AS thecount FROM $thedb.$logstable;";
 			$totalmessagessql=$getlognum;
-			$getlognum=mysql_fetch_object(mysql_query($getlognum))->thecount;
+			$getlognum=mysqli_fetch_object(mysqli_query($dbconn,$getlognum))->thecount;
 		}
 		//Print out results for each table if there's at least 1 table
 		if($numtables>0){
@@ -236,7 +237,7 @@ if($_REQUEST['StatsDB']){
 	echo "</td><td style=\"vertical-align: top;\">\n";
 	//MySQL Server Info/Stats
 	echo "<h4 style=\"color: green;\">MySQL Server Info/Stats</h4>\n";
-	$drivesizear=split("\n",`df -B1 -t ext4 / | grep -v sys | awk '{print $3, $4}'`);
+	$drivesizear=preg_split('/\n/',`df -B1 -t ext4 / | grep -v sys | awk '{print $3, $4}'`);
 	echo "<table border=1>\n";
 	foreach($drivesizear as $ar){
 		if($ar){
@@ -250,7 +251,7 @@ if($_REQUEST['StatsDB']){
 	echo "<tr><td>Estimated Total Message Capacity</td><td>" . number_format($estimatedtotal,0,".",",") . "</td></tr>\n";
 	echo "<tr><td>Estimated Messages Remaining</td><td>" . number_format($estimatedremain,0,".",",") . "</td></tr>\n";
 	//Syslog-ng Service
-	$mysqlrootlogincheckar=split("\n",`ps aux | grep syslog-ng | grep run | awk '{print $11}'`);
+	$mysqlrootlogincheckar=preg_split('/\n/',`ps aux | grep syslog-ng | grep Ssl | awk '{print $11}'`);
 	$count=0;
 	foreach($mysqlrootlogincheckar as $ar){
 		if($ar!='' && $ar!='sh'){
@@ -302,7 +303,7 @@ if($_REQUEST['StatsDB']){
 			$sqlstring=substr($sqlstring,0,-1).";"; 
 			//echo "SQL String: $sqlstring<br />\n";
 			//Query could take a long while to run...be careful
-			$watchlistval=mysql_fetch_object(mysql_query($sqlstring));
+			$watchlistval=mysqli_fetch_object(mysqli_query($dbconn,$sqlstring));
 			//Loop through results and print status
 			foreach($watchlistval as $watchhost=>$watchlistcnt){
 				echo "<tr>";
