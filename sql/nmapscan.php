@@ -401,7 +401,7 @@
 				list($junk,$remain)=explode('.',$remain,2);
 				list($junk,$val)=explode('.',$remain,2);
 				//Convert 0:b:ab:7 to 00:0b:ab:07
-				$octet=split(":",$id);
+				$octet=preg_split('/:/',$id);
 				$id="";
 				foreach($octet as $oct) {
 					if(strlen($oct)==1) $oct="0" . $oct;
@@ -503,11 +503,11 @@
 			}
 			//Determine what type of NMAP scan to do
 			if($updown=="a"){
-				$nmapstring="sudo nmap -PO -sP -PE -n --open -v $theip --exclude $exclusions | grep \"scan report\" | sed 's/Nmap scan report for //g'";
+				$nmapstring="sudo nmap -PO -sn -PE -n -v $theip --exclude $exclusions | grep \"scan report\" | sort -V | sed 's/Nmap scan report for //g'";
 			} else if($updown=="u"){
-				$nmapstring="sudo nmap -PO -sP -PE -n --open -v $theip --exclude $exclusions | grep \"scan report\" | grep -v \"host down\" | sed 's/Nmap scan report for //g'";
+				$nmapstring="sudo nmap -PO -sn -PE -n --open -v $theip --exclude $exclusions | grep \"scan report\" | grep -v \"host down\" | sort -V | sed 's/Nmap scan report for //g'";
 			} else if($updown=="d"){
-				$nmapstring="sudo nmap -PO -sP -PE -n --open -v $theip --exclude $exclusions | grep \"scan report\" | grep \"host down\" | sed 's/Nmap scan report for //g' | sed 's/ \[host down\]//g'";
+				$nmapstring="sudo nmap -PO -sn -PE -n -v $theip --exclude $exclusions | grep \"scan report\" | grep \"host down\" | sort -V | sed 's/Nmap scan report for //g' | sed 's/ \[host down\]//g'";
 			}
 			//echo "COMMAND: $nmapstring<br />";
 			//Run the NMAP scan
